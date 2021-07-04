@@ -28,15 +28,17 @@ db.connect((err) => {
 const app = express();
  
 //Favorite Creation Function:
-function CreateFavorite(inp, pk){
+async function CreateFavorite(inp, pk){
     //Array of command typed by Client
     let inp_arr = inp.split(" ")
     console.log(`Length of array is ${inp_arr.length}`)
     //Numbers after $ in the first string in inp_arr (stop id)
     const stop_num = inp_arr[0].slice(1,inp_arr[0].length)
     
+    //IF Client input is VALID:
     if (inp_arr[0][0] == "$" && isNaN(stop_num) == false && inp_arr.length > 1 ){ 
-        console.log("Valid stop number")
+        
+        //Fetch API Function (stopNum)
         const stopNum = async (stop_num) => {
             let body = {a:1};
             const data = 
@@ -49,38 +51,36 @@ function CreateFavorite(inp, pk){
             .catch((error) => null )
             
         }
+
+        //Execute stopNum Function, Wait for result of API Fetch:
         stopNum(stop_num).then(function(result){
              if (result == null){ //API Throws error (invalid user input)
              return null
              } 
              //Successful response from API
              else {
-                 //Optimize the strings for sql 
-                    const postData = ``
+                    const postData = [
+                        `ID = '${pk}',` , 
+                        `stop_name = '${result.Name}',
+                        stop_id = '${result.StopId.slice(0, result.StopId.length-2)}',
+                        stop_nick = '${inp_arr[1]}' ,
+                        stop_desc = '${inp.slice(inp_arr[0].length + inp_arr[1].length+2,inp.length)}'`]
                     
                     //Check IF confirm_favorite ID is in the Database:
                     db.query(`SELECT * FROM confirm_favorite WHERE ID = '${pk}' `, (err,res,fields)=> {
                         console.log(JSON.stringify(res))
                         //Set SQL command to Alter Table of ID:
-                        let sql = `UPDATE confirm_favorite 
-                                    SET stop_name = '${result.Name}',
-                                        stop_id = '${result.StopId}',
-                                        stop_nick = '${inp_arr[1]}',
-                                        stop_desc = '${inp.slice(inp_arr[0].length + inp_arr[1].length+2,inp.length)}'
-                                    WHERE ID = '${pk}'; 
-                                        `    
+                        let sql = `UPDATE confirm_favorite SET ${postData[1]} WHERE ID = '${pk}';` 
+                                            
                         //If Entry doesn't exist: (Rewrite SQL command)
                         if (JSON.stringify(res) == '[]'){
                             console.log("User doesn't have an entry in DB")
-                            sql = `INSERT INTO confirm_favorite SET ID = '${pk}',
-                                        stop_name = '${result.Name}',
-                                        stop_id = '${result.StopId}',
-                                        stop_nick = '${inp_arr[1]}' ,
-                                        stop_desc = '${inp.slice(inp_arr[0].length + inp_arr[1].length+2,inp.length)}'`
+                            sql = `INSERT INTO confirm_favorite SET ${postData[0]} ${postData[1]};`
                         } 
 
                         db.query(sql, (error,result)=> {
                             console.log(result);
+
                             if(error) throw error
                             //Handle possible error here...
                         });
@@ -189,7 +189,7 @@ app.post('/sms', (req,res)=> {
 
     //If the API successfully retrieves stopId's JSONData, then the messageSend function will execute:
     function messageSend(json_return){
-        twiml.message(formatJson(json_return));
+        twiml.message(json_return);
         res.writeHead(200, { 'Content-Type': 'text/xml' });
         res.end(twiml.toString());
     }
@@ -206,13 +206,13 @@ app.post('/sms', (req,res)=> {
             headers: { 'Content-Type': 'application/json' },
         })
         .then(res => res.json())
-        .then(json => messageSend(json))
+        .then(json => messageSend(formatJson(json)))
         .catch((error) => messageFail());
 
     } 
     else if (user_input[0] == '$'){
 
-    CreateFavorite(user_input, user_number);
+    CreateFavorite(user_input, user_number).then((cf_res) => console.log("Return: " + cf_res))
             
 
     } else {

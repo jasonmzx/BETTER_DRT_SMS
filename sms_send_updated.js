@@ -78,8 +78,10 @@ function formatJson(json_return){
 };
 
 let formatCreateFavorite = (data) => {
-    if (data.stop_desc == null){
-        return `Successfully created favorite`
+    if (data.stop_desc == ''){
+        return `[Created Favorite]\n@${data.stop_nick}\n\n[Corresponding stop]:\n ${data.stop_id} - (${data.stop_name})\n\nYou can now use @${data.stop_nick} instead of @${data.stop_id} to search times.`
+    } else {
+        return `Created Favorite: ${data.stop_nick}\nCorresponding stop: ${data.stop_id}\n${data.stop_name}\nStop Description:\n${data.stop_desc}`
     }
 
 }
@@ -190,7 +192,7 @@ app.post('/sms', (req,res)=> {
                         //Post Query that takes the DATA from postData and inserts or updates the DB
                         db.query(sql, (SQL_p_err,SQL_p_res)=> {
                             console.log(SQL_p_res);
-                            twiml.message(`Success. ${postData.stop_nick}`)
+                            twiml.message(formatCreateFavorite(postData));
                             res.writeHead(200, { 'Content-Type': 'text/xml' });
                             res.end(twiml.toString());
 

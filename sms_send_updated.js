@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
 const twilio = require("twilio");
 const { json } = require("express");
+const { table } = require("console");
 
 const body = { a: 1 };
 
@@ -14,7 +15,8 @@ const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'maindb'
+    database: 'maindb',
+    multipleStatements: true
 });
 
 //Connect
@@ -75,36 +77,136 @@ function formatJson(json_return){
     return result
 };
 
+let formatCreateFavorite = (data) => {
+    if (data.stop_desc == null){
+        return `Successfully created favorite`
+    }
+
+}
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
 
 app.post('/sms', (req,res)=> {
-    //User who sent this message's attributes:
+    //Client's attributes:
+
+    //Client's message
     const user_input = req.body.Body
+    //Client's Phone Number
     const user_number = req.body.From
+    //Name of Client's Table in MySQL
+    const table_name = "c_" + user_number.slice(1,user_number.length)
 
     const twiml = new MessagingResponse();
     console.log(`From: ${user_number} , text sent: ${user_input}`);
     //##
     //Stop request: If user's input contains '@' at the 0th index of the string & the rest of the string is numeric (Not NaN), then proceed to try and fetch said number from DRT API!
     //##
-    if (user_input[0] == "@" && isNaN(user_input.slice(1, user_input.length)) == false ){
+    
+    if(user_input[0] == '@'){
+
+        //Everything after the @ is numbers E.X. @123456
+        if (isNaN(user_input.slice(1, user_input.length)) == false ){
         
-        const stopId = user_input.slice(1, user_input.length)
+            const stopId = user_input.slice(1, user_input.length)
 
-        drt_api_fetch(stopId).then((result) => {
-            twiml.message(formatJson(result));
-            res.writeHead(200, { 'Content-Type': 'text/xml' });
-            res.end(twiml.toString());
+            drt_api_fetch(stopId).then((result) => {
+                console.log(result);
+                //If StopID isn't found (send error msg)
+                if (result == null){
+                    twiml.message(`Stop ${stopId} was not found.`)
+                    res.writeHead(200, { 'Content-Type': 'text/xml' });
+                    res.end(twiml.toString());
+                //StopID Is found, Send formatted version of API result to client.
+                } else {
+                    twiml.message(formatJson(result));
+                    res.writeHead(200, { 'Content-Type': 'text/xml' });
+                    res.end(twiml.toString());
+                }
+            });
 
-        });
+        }
 
-    } 
+    } // END OF @ command   
+
     else if (user_input[0] == '$'){
 
-    CreateFavorite(user_input, user_number).then((cf_res) => console.log("Return: " + cf_res))
-            
+        let inp_arr = user_input.split(" ")
+        console.log(`Length of array is ${inp_arr.length}`)
+        //Numbers after $ at index 0 in inp_arr (StopID) 
+        const stopId = inp_arr[0].slice(1,inp_arr[0].length)
+
+        if ( isNaN(stopId) == false && inp_arr.length > 1 && inp_arr[1] != 'list' ){
+
+            drt_api_fetch(stopId).then((result) =>{
+                //Api throws error
+                if(result == null){
+
+                } else {
+                    
+                    const postData = {
+                        ID : user_number,
+                        stop_name : result.Name,
+                        stop_id : result.StopId.slice(0, result.StopId.length-2),
+                        stop_nick : inp_arr[1] ,
+                        stop_desc : user_input.slice(inp_arr[0].length + inp_arr[1].length+2,user_input.length)
+                    }
+
+                    
+                    let sql = ``
+                    //Search Query that returns data as a result (SQL_s_err or res represents SQL_Search_Error or Result)    
+                    db.query(`SELECT * FROM ${table_name} WHERE stop_id = '${postData.stop_id}' `, (SQL_s_err,SQL_s_res,fields)=> {
+                        console.log(JSON.stringify(SQL_s_res))
+                        //Set SQL command to Alter Table of ID:
+                        sql =  `INSERT INTO ${table_name} 
+                        SET stop_id = '${postData.stop_id}',
+                        stop_nick = '${postData.stop_nick}',
+                        stop_desc = '${postData.stop_desc}',
+                        stop_name = '${postData.stop_name}'; `;
+                  
+                        if(JSON.stringify(SQL_s_res) != "[]"){
+                            sql = `UPDATE ${table_name} 
+                            SET stop_nick = '${postData.stop_nick}',
+                                stop_desc = '${postData.stop_desc}'
+                            WHERE stop_id = '${postData.stop_id}';`    
+                        }
+
+                        
+                        //If TABLE doesn't exist: Adjust SQL Command:
+                        if(SQL_s_err){
+                            if (SQL_s_err.code == 'ER_NO_SUCH_TABLE'){
+                                console.log("User doesn't have a table in DB")
+                                console.log(SQL_s_res)
+                                sql = `CREATE TABLE ${table_name}(
+                                    stop_id VARCHAR(10) NOT NULL, 
+                                    stop_nick VARCHAR(50) NOT NULL, 
+                                    stop_desc MEDIUMTEXT, 
+                                    stop_name MEDIUMTEXT);` + sql;
+                            }
+                            else throw(SQL_s_err);
+                        }
+
+                        console.log("THis here is the return: "+ sql) 
+                        //Post Query that takes the DATA from postData and inserts or updates the DB
+                        db.query(sql, (SQL_p_err,SQL_p_res)=> {
+                            console.log(SQL_p_res);
+                            twiml.message(`Success. ${postData.stop_nick}`)
+                            res.writeHead(200, { 'Content-Type': 'text/xml' });
+                            res.end(twiml.toString());
+
+
+                            if(SQL_p_err) throw "ERRNO!!!" + SQL_p_err;
+                            //Handle possible error here...
+                        });
+
+                    
+                    });    
+
+
+                }
+            });    
+        } 
+
 
     } else {
         twiml.message("Sorry, this command was invalid, \n For proper use, try @### , replace the hashtags with prefered stop ID")

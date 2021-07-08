@@ -45,10 +45,15 @@ const drt_api_fetch = async (stop_num) => {
 }
 
 //This is the Formatter for JSON Response:
-function formatJson(json_return){
+function formatJson(json_return, fav_name){
     //console.log(json_return);
-    let result = json_return.Name + "\n\n"
-    
+    let result = ''
+    if (fav_name == null){
+        result = json_return.Name + "\n\n"
+    } else {
+        result = json_return.Name + "\n" + fav_name + "\n\n"
+    }
+
     function TripFormat(item, index){
         
     
@@ -93,7 +98,7 @@ app.post('/sms', (req,res)=> {
     //Client's attributes:
 
     //Client's message
-    const user_input = req.body.Body
+    const user_input = (req.body.Body).trim()
     //Client's Phone Number
     const user_number = req.body.From
     //Name of Client's Table in MySQL
@@ -110,7 +115,7 @@ app.post('/sms', (req,res)=> {
         //Everything after the @ is numbers E.X. @123456
         if (isNaN(user_input.slice(1, user_input.length)) == false ){
         
-            const stopId = user_input.slice(1, user_input.length)
+            const stopId = user_input.slice(1, user_input.length);
 
             drt_api_fetch(stopId).then((result) => {
                 console.log(result);
@@ -121,13 +126,36 @@ app.post('/sms', (req,res)=> {
                     res.end(twiml.toString());
                 //StopID Is found, Send formatted version of API result to client.
                 } else {
-                    twiml.message(formatJson(result));
+                    twiml.message(formatJson(result, null));
                     res.writeHead(200, { 'Content-Type': 'text/xml' });
                     res.end(twiml.toString());
                 }
             });
 
         }
+        else {
+            console.log("goes here!")
+            const FavId = user_input.slice(1, user_input.length);
+            db.query(`SELECT * FROM ${table_name} WHERE stop_nick = '${FavId}'`,(q_err,q_res) => {
+                console.log(JSON.parse(q_res[0].stop_id));       
+                drt_api_fetch(JSON.parse(q_res[0].stop_id)).then((result) => {
+                    console.log(result);
+                    //If StopID isn't found (send error msg)
+                    if (result == null){
+                        twiml.message(`Favorite ${FavId} was not found.`)
+                        res.writeHead(200, { 'Content-Type': 'text/xml' });
+                        res.end(twiml.toString());
+                    //StopID Is found, Send formatted version of API result to client.
+                    } else {
+                        twiml.message(formatJson(result,JSON.stringify(q_res[0].stop_nick)));
+                        res.writeHead(200, { 'Content-Type': 'text/xml' });
+                        res.end(twiml.toString());
+                    }
+                });
+            });
+            
+
+        } 
 
     } // END OF @ command   
 
@@ -183,7 +211,12 @@ app.post('/sms', (req,res)=> {
                                     stop_id VARCHAR(10) NOT NULL, 
                                     stop_nick VARCHAR(50) NOT NULL, 
                                     stop_desc MEDIUMTEXT, 
-                                    stop_name MEDIUMTEXT);` + sql;
+                                    stop_name MEDIUMTEXT); 
+                                    INSERT INTO ${table_name} 
+                                    SET stop_id = '${postData.stop_id}',
+                                    stop_nick = '${postData.stop_nick}',
+                                    stop_desc = '${postData.stop_desc}',
+                                    stop_name = '${postData.stop_name}';`;
                             }
                             else throw(SQL_s_err);
                         }
@@ -195,7 +228,6 @@ app.post('/sms', (req,res)=> {
                             twiml.message(formatCreateFavorite(postData));
                             res.writeHead(200, { 'Content-Type': 'text/xml' });
                             res.end(twiml.toString());
-
 
                             if(SQL_p_err) throw "ERRNO!!!" + SQL_p_err;
                             //Handle possible error here...

@@ -134,25 +134,25 @@ app.post('/sms', (req,res)=> {
 
         }
         else {
-            console.log("goes here!")
             const FavId = user_input.slice(1, user_input.length);
             db.query(`SELECT * FROM ${table_name} WHERE stop_nick = '${FavId}'`,(q_err,q_res) => {
+                if(JSON.stringify(q_res) == '[]'){
+                    twiml.message(`Favorite ${FavId} was not found.`)
+                    res.writeHead(200, { 'Content-Type': 'text/xml' });
+                    res.end(twiml.toString());
+                } else {
+
                 console.log(JSON.parse(q_res[0].stop_id));       
-                drt_api_fetch(JSON.parse(q_res[0].stop_id)).then((result) => {
-                    console.log(result);
-                    //If StopID isn't found (send error msg)
-                    if (result == null){
-                        twiml.message(`Favorite ${FavId} was not found.`)
-                        res.writeHead(200, { 'Content-Type': 'text/xml' });
-                        res.end(twiml.toString());
-                    //StopID Is found, Send formatted version of API result to client.
-                    } else {
-                        twiml.message(formatJson(result,JSON.stringify(q_res[0].stop_nick)));
-                        res.writeHead(200, { 'Content-Type': 'text/xml' });
-                        res.end(twiml.toString());
-                    }
-                });
-            });
+                    drt_api_fetch(JSON.parse(q_res[0].stop_id)).then((result) => {
+                        console.log(result);
+                        //If StopID isn't found (send error msg)
+                            twiml.message(formatJson(result,JSON.stringify(q_res[0].stop_nick)));
+                            res.writeHead(200, { 'Content-Type': 'text/xml' });
+                            res.end(twiml.toString());
+
+                    }); //End of API Fetch
+                } // End of Else
+            }); //End of Query
             
 
         } 
@@ -182,23 +182,43 @@ app.post('/sms', (req,res)=> {
                         stop_desc : user_input.slice(inp_arr[0].length + inp_arr[1].length+2,user_input.length)
                     }
 
-                    
+                    //SQL Commands:
+                    const sql_cmd = {
+                    //If Table is created but stop_id isn't registered to a favorite yet...
+                        default :  
+                        `INSERT INTO ${table_name} 
+                        SET stop_id = '${postData.stop_id}',
+                        stop_nick = '${postData.stop_nick}',
+                        stop_desc = '${postData.stop_desc}',
+                        stop_name = '${postData.stop_name}';`,
+                    //If Table exists & stop_id is already registered to a favorite, update the favorite with new data.
+                        update_fav:
+                        `UPDATE ${table_name} 
+                            SET stop_nick = '${postData.stop_nick}',
+                            stop_desc = '${postData.stop_desc}'
+                            WHERE stop_id = '${postData.stop_id}';`,
+                    //If Table doesn't exist, execute: (Execute table_create + default)
+                        table_create:
+                        `CREATE TABLE ${table_name}(
+                            stop_id VARCHAR(10) NOT NULL, 
+                            stop_nick VARCHAR(50) NOT NULL, 
+                            stop_desc MEDIUMTEXT, 
+                            stop_name MEDIUMTEXT);` 
+
+                    }
+
+
+
+
                     let sql = ``
                     //Search Query that returns data as a result (SQL_s_err or res represents SQL_Search_Error or Result)    
                     db.query(`SELECT * FROM ${table_name} WHERE stop_id = '${postData.stop_id}' `, (SQL_s_err,SQL_s_res,fields)=> {
                         console.log(JSON.stringify(SQL_s_res))
                         //Set SQL command to Alter Table of ID:
-                        sql =  `INSERT INTO ${table_name} 
-                        SET stop_id = '${postData.stop_id}',
-                        stop_nick = '${postData.stop_nick}',
-                        stop_desc = '${postData.stop_desc}',
-                        stop_name = '${postData.stop_name}'; `;
+                        sql =  sql_cmd.default;
                   
                         if(JSON.stringify(SQL_s_res) != "[]"){
-                            sql = `UPDATE ${table_name} 
-                            SET stop_nick = '${postData.stop_nick}',
-                                stop_desc = '${postData.stop_desc}'
-                            WHERE stop_id = '${postData.stop_id}';`    
+                            sql = sql_cmd.update_fav 
                         }
 
                         
@@ -207,16 +227,7 @@ app.post('/sms', (req,res)=> {
                             if (SQL_s_err.code == 'ER_NO_SUCH_TABLE'){
                                 console.log("User doesn't have a table in DB")
                                 console.log(SQL_s_res)
-                                sql = `CREATE TABLE ${table_name}(
-                                    stop_id VARCHAR(10) NOT NULL, 
-                                    stop_nick VARCHAR(50) NOT NULL, 
-                                    stop_desc MEDIUMTEXT, 
-                                    stop_name MEDIUMTEXT); 
-                                    INSERT INTO ${table_name} 
-                                    SET stop_id = '${postData.stop_id}',
-                                    stop_nick = '${postData.stop_nick}',
-                                    stop_desc = '${postData.stop_desc}',
-                                    stop_name = '${postData.stop_name}';`;
+                                sql = sql_cmd.table_create + sql_cmd.default 
                             }
                             else throw(SQL_s_err);
                         }

@@ -1,5 +1,21 @@
 var fs = require('fs') , filename = 'stops.txt';
+const mysql = require('mysql');
+//Create MYSQL connection:
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'drt_sms_db',
+    multipleStatements: true
+});
 
+//Connect
+db.connect((err) => {
+    if(err){
+        throw err;
+    }
+    console.log('MySQL is loaded!')
+})
 
 fs.readFile(filename, 'utf8', function(err, data) {
     if (err) throw err;
@@ -15,9 +31,9 @@ fs.readFile(filename, 'utf8', function(err, data) {
         };
         // Wheelchair boolean
         if(imps[11] == 1) {
-           imps[11] = true
+           imps[11] = 1 //TRUE
         } else {
-            imps[11] = false
+            imps[11] = 0  //False
         }
 
         //
@@ -27,8 +43,17 @@ fs.readFile(filename, 'utf8', function(err, data) {
             wheelchair_access : imps[11],
 
         }
+                                    //Replace NULL__ with stops 
+        db.query(`INSERT INTO NULL__  
+                    SET stop_id = '${cleanData.stop_id}', 
+                    stop_name = "${cleanData.stop_name}", 
+                    wheelchair_access = ${cleanData.wheelchair_access} `, (err,res) =>{
+            console.log(cleanData)
+            
+            if(err) throw err
 
-        console.log(cleanData)
+        });
+
 
     });
   });

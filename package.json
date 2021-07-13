@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "gtfs": "^2.4.1",
     "gtfs-realtime-bindings": "0.0.6",
     "mysql": "^2.18.1",
     "request": "^2.88.2",

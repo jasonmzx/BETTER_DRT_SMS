@@ -1,11 +1,14 @@
 var fs = require('fs') , stop_times = 'gtfs_static/stop_times.txt', trips = 'gtfs_static/trips.txt';
 const mysql = require('mysql');
 
+//Database Login Info:
+var DBlogin = JSON.parse(fs.readFileSync('private/db_info.json', 'utf8'));
+
 const db = mysql.createConnection({
     host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'drt_sms_db',
+    user: DBlogin.user,
+    password: DBlogin.password,
+    database: DBlogin.database,
     multipleStatements: true
 });
 
@@ -15,6 +18,7 @@ db.connect((err) => {
         throw err;
     }
     console.log('MySQL is loaded!')
+    console.log(DBlogin)
 })
 
 
@@ -41,24 +45,25 @@ fs.readFile(trips, 'utf8', function(trip_err,trip_data) {
             const st_array = st_line.split(',');
             //console.log(t_array[2])
             if(st_array[0] == t_array[2]){
-            //    const rowPushData = {
-            //        route_id: t_array[0],
-            //        service_id: t_array[1],
-            //        trip_id: t_array[2],
-            //        stop_id: st_array[3].slice(0,st_array[3].length-2),
-            //        arrival_time: st_array[1],
-            //        departure_time: st_array[2]
-            //    }
-               //console.log(rowPushData);
+            
+                if(t_array[1] == 'SundaySum'){
+                    t_array[1] = 'Sunday'
+                    console.log('Changed! SUN')
+                } else if(t_array[1] == 'SaturdaySum'){
+                    t_array[1] = 'Saturday'
+                    console.log('Changed! SAT')
+                };
+  
+
                console.log(st_lines.indexOf(st_line) + " , " + trip_lines.indexOf(t_line));
                                 //Replace null with "Stop_times"
-            db.query(`INSERT INTO stop_times 
+            db.query(`INSERT INTO null 
                 SET route_id = "${t_array[0]}", 
                 service_id = "${t_array[1]}", 
                 trip_id = "${t_array[2]}",
                 stop_id = "${st_array[3].slice(0,st_array[3].length-2)}",
-                arrival_time = "${st_array[1]}",
-                departure_time = "${st_array[2]}",
+                arrival_time = "${parseInt(st_array[1].slice(0,2))*60 + parseInt(st_array[1].slice(3,5))}",
+                departure_time = "${parseInt(st_array[2].slice(0,2))*60 + parseInt(st_array[2].slice(3,5))}",
                 orientation = "${t_array[7]}"
                 `, (p_err,p_res) =>{
                 console.log(p_res);

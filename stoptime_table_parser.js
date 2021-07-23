@@ -44,29 +44,31 @@ console.log(current_time)
 
 //Day of the Week Classifications:
 
-console.log('*** '+day_type+' ***')
+console.log(parseInt(current_time.slice(0,2)) + " " + parseInt(current_time.slice(3,5)))
 
-staticTimes('2242').then(result => {
+staticTimes('1695').then(result => {
     
     const formattedData = {}
     
     result.forEach(elm => {
-        //console.log(elm);
+        const route_class = `${elm.route_id} ${elm.orientation}`
         //Making sure the Dictionary of a specific route exists in array
         //=> before trying to append data into it... 
         // const Routes = formattedData.map(route_dict => {
         //     return Object.keys(route_dict)[0]
         // })    
 
-
-        if(Object.keys(formattedData).includes(elm.route_id) == false)
+        if(Object.keys(formattedData).includes(route_class) == false)
         { 
-            formattedData[elm.route_id] = []
+            formattedData[route_class] = []
         };
         
         //Appending Data in specified route dict, if day_type corresponds..
-        if (day_type == elm.service_id){
-            formattedData[elm.route_id].push(elm.arrival_time + " " + elm.service_id)
+        if (day_type == elm.service_id 
+            && parseInt(current_time.slice(0,2)) <= parseInt(elm.arrival_time.slice(0,2)) 
+            && parseInt(current_time.slice(3,5)) <= parseInt(elm.arrival_time.slice(3,5))
+            ){
+            formattedData[route_class].push(elm.arrival_time + " " + elm.service_id)
         };
  
     })

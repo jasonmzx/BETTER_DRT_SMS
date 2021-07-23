@@ -25,7 +25,18 @@ let daw_classif = daw => {
     }   else {return daw};
 };
 
+//Setting Date and Date+1
+
 const day_type = daw_classif(date.format(new Date(), 'dddd'));
+
+//New instance of the date plus 1 Day:
+let new_date = new Date()
+new_date.setDate(new_date.getDate() + 1)
+
+const day_type_p1 = daw_classif(date.format(new_date, 'dddd'));
+
+
+console.log(`Dates: ${day_type} , ${day_type_p1}`)
 
 let staticTimes = stopId => { 
     return new Promise(resolve => {
@@ -44,12 +55,15 @@ console.log(current_time)
 
 //Day of the Week Classifications:
 
-console.log(parseInt(current_time.slice(0,2)) + " " + parseInt(current_time.slice(3,5)))
+//Formatting current time into minutes (1:30) -> 90 (60 + 30)
+const formattedCurrentTime = parseInt(date.format(now, 'HH'))*60 + parseInt(date.format(now, 'mm')) 
+console.log(formattedCurrentTime)
 
-staticTimes('1695').then(result => {
+staticTimes('2242').then(result => {
     
     const formattedData = {}
     
+    //Generating formatted Data:
     result.forEach(elm => {
         const route_class = `${elm.route_id} ${elm.orientation}`
         //Making sure the Dictionary of a specific route exists in array
@@ -58,20 +72,27 @@ staticTimes('1695').then(result => {
         //     return Object.keys(route_dict)[0]
         // })    
 
-        if(Object.keys(formattedData).includes(route_class) == false)
-        { 
-            formattedData[route_class] = []
-        };
+        //if(Object.keys(formattedData).includes(route_class) == false)
+
+        formattedData[route_class] = formattedData[route_class] || {today: [] , tmrw : [] }
+
         
         //Appending Data in specified route dict, if day_type corresponds..
-        if (day_type == elm.service_id 
-            && parseInt(current_time.slice(0,2)) <= parseInt(elm.arrival_time.slice(0,2)) 
-            && parseInt(current_time.slice(3,5)) <= parseInt(elm.arrival_time.slice(3,5))
-            ){
-            formattedData[route_class].push(elm.arrival_time + " " + elm.service_id)
-        };
+        if (day_type == elm.service_id && formattedCurrentTime <= elm.arrival_time ) 
+        {
+            formattedData[route_class].today.push(elm.arrival_time)
+        } if (day_type_p1 == elm.service_id){
+            formattedData[route_class].tmrw.push(elm.arrival_time)
+        }
  
     })
 
     console.log(formattedData)
+    //Sorting formattedData:
+    Object.keys(formattedData).forEach(route_key => {
+        formattedData[route_key].today.sort((a, b) => a - b)
+        formattedData[route_key].tmrw.sort((a, b) => a - b)
+    });
+
+
 });

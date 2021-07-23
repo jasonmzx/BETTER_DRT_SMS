@@ -20,11 +20,7 @@ db.connect((err) => {
 })
 
 
-var requestSettings = {
-  method: 'GET',
-  url: 'https://drtonline.durhamregiontransit.com/gtfsrealtime/TripUpdates',
-  encoding: null
-};
+
 
 
 

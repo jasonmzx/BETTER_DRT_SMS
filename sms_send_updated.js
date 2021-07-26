@@ -60,7 +60,7 @@ function formatJson(json_return, fav_name){
         //This function calculates the amount of time between the Current Time (c_time) & the time the bus is arriving (a_time)
         function ArrivalTimeDifference(){
         //const c_time = [Math.floor(new Date().getTime()/8.64e+7 - 0.166667), new Date().getTime()/8.64e+7 - 0.166667]
-        const c_time = (new Date().getTime()/8.64e+7 - 0.166667 - Math.floor(new Date().getTime()/8.64e+7 - 0.166667))*86400;
+        const c_time = (Date.now()/8.64e+7 - 0.166667 - Math.floor(Date.now()/8.64e+7 - 0.166667))*86400;
         let a_time = 0;
         if (item.RealTime > 86400){
             a_time = item.RealTime-86400;
@@ -82,14 +82,23 @@ function formatJson(json_return, fav_name){
     return result
 };
 
-let formatCreateFavorite = (data) => {
-    if (data.stop_desc == ''){
-        return `[Created Favorite]\n@${data.stop_nick}\n\n[Corresponding stop]:\n ${data.stop_id} - (${data.stop_name})\n\nYou can now use @${data.stop_nick} instead of @${data.stop_id} to search times.`
-    } else {
-        return `Created Favorite: ${data.stop_nick}\nCorresponding stop: ${data.stop_id}\n${data.stop_name}\nStop Description:\n${data.stop_desc}`
-    }
+let formatCreateFavorite = (data) =>
+    data.stop_desc ?
+// With stop_desc
+`Created Favorite: ${data.stop_nick}
+Corresponding stop: ${data.stop_id}
+${data.stop_name}
+Stop Description:
+${data.stop_desc}` :
 
-}
+// Without stop_desc
+`[Created Favorite]
+@${data.stop_nick}
+
+[Corresponding stop]:
+ ${data.stop_id} - (${data.stop_name})
+
+You can now use @${data.stop_nick} instead of @${data.stop_id} to search times.`
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -99,10 +108,12 @@ app.post('/sms', (req,res)=> {
 
     //Client's message
     const user_input = (req.body.Body).trim()
+    //Client's command arguments
+    const input_after_cmd = user_input.slice(1);
     //Client's Phone Number
     const user_number = req.body.From
     //Name of Client's Table in MySQL
-    const table_name = "c_" + user_number.slice(1,user_number.length)
+    const table_name = `c_${user_number.slice(1)}`
 
     const twiml = new MessagingResponse();
     console.log(`From: ${user_number} , text sent: ${user_input}`);
@@ -113,40 +124,34 @@ app.post('/sms', (req,res)=> {
     if(user_input[0] == '@'){
         console.log("@@@@@@@@@")
         //Everything after the @ is numbers E.X. @123456
-        if (isNaN(user_input.slice(1, user_input.length)) == false ){
+        if (isNaN(input_after_cmd) == false ){
             console.log("test")
-            const stopId = user_input.slice(1, user_input.length);
+            const stopId = input_after_cmd;
 
             drt_api_fetch(stopId).then((result) => {
                 console.log(result);
-                //If StopID isn't found (send error msg)
-                if (result == null){
-                    twiml.message(`Stop ${stopId} was not found.`)
-                    res.writeHead(200, { 'Content-Type': 'text/xml' });
-                    res.end(twiml.toString());
-                //StopID Is found, Send formatted version of API result to client.
-                } else {
-                    twiml.message(formatJson(result, null));
-                    res.writeHead(200, { 'Content-Type': 'text/xml' });
-                    res.end(twiml.toString());
-                }
+                //If StopID Is found, Send formatted version of API result to client.
+                //Else, StopID isn't found (send error msg)
+                twiml.message(result ? formatJson(result, null) : `Stop ${stopId} was not found.`)
+                res.writeHead(200, { 'Content-Type': 'text/xml' });
+                res.end(twiml.toString());
             });
 
         }
         else {
-            const FavId = user_input.slice(1, user_input.length);
+            const FavId = input_after_cmd;
             db.query(`SELECT * FROM ${table_name} WHERE stop_nick = '${FavId}'`,(q_err,q_res) => {
-                if(JSON.stringify(q_res) == '[]'){
+                if(!q_res.length){
                     twiml.message(`Favorite ${FavId} was not found.`)
                     res.writeHead(200, { 'Content-Type': 'text/xml' });
                     res.end(twiml.toString());
                 } else {
-
-                console.log(JSON.parse(q_res[0].stop_id));       
-                    drt_api_fetch(JSON.parse(q_res[0].stop_id)).then((result) => {
+                    let { stop_id, stop_nick } = q_res[0];
+                console.log(JSON.parse(stop_id));       
+                    drt_api_fetch(JSON.parse(stop_id)).then((result) => {
                         console.log(result);
                         //If StopID isn't found (send error msg)
-                            twiml.message(formatJson(result,JSON.stringify(q_res[0].stop_nick)));
+                            twiml.message(formatJson(result,JSON.stringify(stop_nick)));
                             res.writeHead(200, { 'Content-Type': 'text/xml' });
                             res.end(twiml.toString());
 
@@ -164,7 +169,7 @@ app.post('/sms', (req,res)=> {
         let inp_arr = user_input.split(" ")
         console.log(`Length of array is ${inp_arr.length}`)
         //Numbers after $ at index 0 in inp_arr (StopID) 
-        const stopId = inp_arr[0].slice(1,inp_arr[0].length)
+        const stopId = inp_arr[0].slice(1)
 
         if ( isNaN(stopId) == false && inp_arr.length > 1 && inp_arr[1] != 'list' ){
 
@@ -179,7 +184,7 @@ app.post('/sms', (req,res)=> {
                         stop_name : result.Name,
                         stop_id : result.StopId.slice(0, result.StopId.length-2),
                         stop_nick : inp_arr[1] ,
-                        stop_desc : user_input.slice(inp_arr[0].length + inp_arr[1].length+2,user_input.length)
+                        stop_desc : user_input.slice(inp_arr[0].length + inp_arr[1].length+2)
                     }
 
                     //SQL Commands:
@@ -217,7 +222,7 @@ app.post('/sms', (req,res)=> {
                         //Set SQL command to Alter Table of ID:
                         sql =  sql_cmd.default;
                   
-                        if(JSON.stringify(SQL_s_res) != "[]"){
+                        if(SQL_s_res.length){
                             sql = sql_cmd.update_fav 
                         }
 
@@ -254,7 +259,7 @@ app.post('/sms', (req,res)=> {
 
 
     } else {
-        twiml.message("Sorry, this command was invalid, \n For proper use, try @### , replace the hashtags with prefered stop ID")
+        twiml.message("Sorry, this command was invalid, \n For proper use, try @### , replace the hashtags with preferred stop ID")
     }
 
 

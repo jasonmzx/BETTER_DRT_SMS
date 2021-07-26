@@ -111,10 +111,10 @@ app.post('/sms', (req,res)=> {
     //##
     
     if(user_input[0] == '@'){
-
+        console.log("@@@@@@@@@")
         //Everything after the @ is numbers E.X. @123456
         if (isNaN(user_input.slice(1, user_input.length)) == false ){
-        
+            console.log("test")
             const stopId = user_input.slice(1, user_input.length);
 
             drt_api_fetch(stopId).then((result) => {

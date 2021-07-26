@@ -56,13 +56,17 @@ let scheduleFinder = (stop_number) => {
     //This is the successful resolve
     let resolveData = {}
 
+    console.time('SQL_query')
     db.query(`SELECT * FROM stops WHERE stop_id = '${stop_number}'`, (err,res)=>{
         //Invalid stop: (resolve -> null)
-        if(JSON.stringify(res) == '[]'){
-          console.log("Invalid Stop...")
-          resolve(null)
+        if(res.length == 0){
+          console.log("Invalid Stop...");
+          resolve(null);
+          return;
+          console.log("TEST IF THIS RUNS");
         }
-      
+    console.timeEnd('SQL_query')
+
         resolveData = {
           stop_id : stop_number,
           stop_name : res[0].stop_name,
@@ -104,6 +108,7 @@ let scheduleFinder = (stop_number) => {
               const formatTimeArray = [tripInfo.arrivalTime.getHours(),tripInfo.arrivalTime.getMinutes().toString(),""]
               //Formatter:
               
+              //Taking this out and replacing it with date-time library:
                 if (formatTimeArray[0] >= 12){
                     formatTimeArray[2] = "PM"
                     formatTimeArray[0] = formatTimeArray[0]-12
@@ -116,7 +121,8 @@ let scheduleFinder = (stop_number) => {
                   if(formatTimeArray[1].length == 1 ){
                     formatTimeArray[1] = '0'+formatTimeArray[1]
                   }
-                
+               //
+
                 tripInfo.formattedTime = formatTimeArray[0]+":"+formatTimeArray[1]+" "+formatTimeArray[2]
 
                 resolveData.trips.push(tripInfo);
@@ -130,7 +136,8 @@ let scheduleFinder = (stop_number) => {
           return a.arrivalTimeDiff - b.arrivalTimeDiff;
       })
     console.timeEnd('func1')
-     resolve(resolveData)   
+     resolve(resolveData);
+     return;   
     });
 
     //console.log("Length:" + result.entity.length)
@@ -144,6 +151,6 @@ let scheduleFinder = (stop_number) => {
 });
 }
 
-scheduleFinder(2242).then(rez => {
+scheduleFinder(420).then(rez => {
 console.log(rez)
 });

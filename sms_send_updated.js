@@ -99,6 +99,8 @@ app.post('/sms', (req,res)=> {
 
     //Client's message
     const user_input = (req.body.Body).trim()
+
+    
     //Client's Phone Number
     const user_number = req.body.From
     //Name of Client's Table in MySQL

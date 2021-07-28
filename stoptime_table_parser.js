@@ -59,7 +59,7 @@ console.log(current_time)
 const formattedCurrentTime = parseInt(date.format(now, 'HH'))*60 + parseInt(date.format(now, 'mm')) 
 console.log(formattedCurrentTime)
 
-staticTimes('2242').then(result => {
+staticTimes('1593').then(result => {
     
     const formattedData = {}
     

@@ -151,6 +151,6 @@ let scheduleFinder = (stop_number) => {
 });
 }
 
-scheduleFinder(420).then(rez => {
+scheduleFinder(1593).then(rez => {
 console.log(rez)
 });

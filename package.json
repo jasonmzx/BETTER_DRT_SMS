@@ -14,7 +14,9 @@
     "gtfs": "^2.4.1",
     "gtfs-realtime-bindings": "0.0.6",
     "mysql": "^2.18.1",
+    "mysql2": "^2.2.5",
     "request": "^2.88.2",
-    "twilio": "^3.63.0"
+    "twilio": "^3.63.0",
+    "util": "^0.12.4"
   }
 }

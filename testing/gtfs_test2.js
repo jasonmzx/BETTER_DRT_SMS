@@ -21,8 +21,10 @@ let read_gtfs = (data_url) => {
 
   
   let parsing = async () => {
-    const data = await read_gtfs('https://drtonline.durhamregiontransit.com/gtfsrealtime/TripUpdates');
-    console.log(data);
-  };
+    const result = await read_gtfs('https://drtonline.durhamregiontransit.com/gtfsrealtime/TripUpdates');
+    const test = result.entity.slice(0,1);
+    console.log(test[0].id);
+
+};
 
   parsing();

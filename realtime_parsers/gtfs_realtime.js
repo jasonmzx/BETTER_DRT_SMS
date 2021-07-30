@@ -80,20 +80,19 @@ let db_insert_realtime = async () => {
                       ${(r.tripUpdate.trip ? r.tripUpdate.trip.routeId : 0)|0} , 
                       ${(r.tripUpdate.vehicle ? r.tripUpdate.vehicle.id : 0)|0} , 
                       ${STU.arrival.time.low} , 
-                      ${(STU.stopId.split(':')[0])|0}),`
+                      ${(STU.stopId.split(':')[0])|0},
+                      '${r.id}'),`
     
     }
   }
   
   query_values = query_values.slice(0,query_values.length-1)
-  await db.execute(`INSERT INTO realtime_gtfs (expiryTime, routeId, vehicleId, arrivalTime, stopId) VALUES ${query_values}`);
+  await db.execute(`INSERT INTO realtime_gtfs (expiryTime, routeId, vehicleId, arrivalTime, stopId, tripId) VALUES ${query_values}`);
 
   console.timeEnd("sql_append_query")
 
   console.log("Completed!")
 }
-
-
 
 
 

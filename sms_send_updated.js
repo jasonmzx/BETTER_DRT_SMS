@@ -114,7 +114,7 @@ app.post('/sms', (req,res)=> {
     
     if(user_input[0] == '@'){
         console.log("@@@@@@@@@")
-        //Everything after the @ is numbers E.X. @123456
+    //Everything after the @ is numbers E.X. @123456
         if (isNaN(user_input.slice(1, user_input.length)) == false ){
             console.log("test")
             const stopId = user_input.slice(1, user_input.length);
@@ -186,14 +186,14 @@ app.post('/sms', (req,res)=> {
 
                     //SQL Commands:
                     const sql_cmd = {
-                    //If Table is created but stop_id isn't registered to a favorite yet...
+                        //If Table is created but stop_id isn't registered to a favorite yet...
                         default :  
                         `INSERT INTO ${table_name} 
                         SET stop_id = '${postData.stop_id}',
                         stop_nick = '${postData.stop_nick}',
                         stop_desc = '${postData.stop_desc}',
                         stop_name = '${postData.stop_name}';`,
-                    //If Table exists & stop_id is already registered to a favorite, update the favorite with new data.
+                        //If Table exists & stop_id is already registered to a favorite, update the favorite with new data.
                         update_fav:
                         `UPDATE ${table_name} 
                             SET stop_nick = '${postData.stop_nick}',

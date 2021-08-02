@@ -19,6 +19,7 @@ $$ //list of all aliases
 
 //Input parser is ASYNC because it requires a Database query for aliases (created by users)
 let input_parse = async (user_input,user_number) => {
+
     user_input = user_input.trim();
 
     //Prefix (@,! or $) , Command
@@ -26,12 +27,13 @@ let input_parse = async (user_input,user_number) => {
         prefix: user_input.slice(0,1) , 
         command: user_input.slice(1,user_input.length)}; 
     
+    console.log(user_input.prefix);
     //Splitting & Filtering Command string for any excess spaces:
     user_input.command = (user_input.command).split` `.filter(elm => elm)
     
     const prefixSetting = {
         realtime_fetch : "@", //action: 1
-        static_fetch : "!", //action: 2
+        static_fetch : "#", //action: 2
         favorite : "$" //action: 3
     }
 
@@ -46,7 +48,7 @@ let input_parse = async (user_input,user_number) => {
             }
             
             //Make sure route_filter is an integer
-            if(isNaN(user_input.command[1])){ return {error_msg: "Route Filter is invalid."}}
+            if(user_input.command[1] && isNaN(user_input.command[1])){ return {error_msg: "Route Filter is invalid."}}
 
             if(isNaN(user_input.command[0])){
                 //Check if Favorite (alias) Exists query:
@@ -84,13 +86,11 @@ let input_parse = async (user_input,user_number) => {
 
 
     if(user_input.prefix == prefixSetting.realtime_fetch){
-
-        console.log(await input_fetch_validation(1))
+        console.log("realtime")
         return await input_fetch_validation(1) //Realtime Fetch (action: 1)
 
     } else if(user_input.prefix == prefixSetting.static_fetch) {
-
-        console.log(await input_fetch_validation(2))
+        console.log("static")
         return await input_fetch_validation(2) //Static Time Fetch (action: 2)
 
     } else if(user_input.prefix == prefixSetting.favorite){
@@ -104,6 +104,37 @@ let input_parse = async (user_input,user_number) => {
             return {error_msg: 'Alias must contain atleast 1 alphabetical character'}
         }
 
+        //Check if StopID exists:
+         const[res,inf] = await Promise_pool.query(`SELECT * FROM stops WHERE stop_id = ?`,[user_input.command[0]])
+        console.log(res);
+        if(!res.length){
+            return {error_msg: `Stop ID not found.`}
+        }
+
+        //Check Stop Aliases (Favorites List) if entry exists:
+        const[fav_res,fav_inf] = await Promise_pool.query('SELECT * FROM `stop_aliases` WHERE alias_owner = ? AND stop_id = ? OR alias = ?',
+        [user_number,user_input.command[0],user_input.command[1]]
+        );
+        console.log(fav_res);
+
+        if(fav_res.length){
+            await Promise_pool.execute(`UPDATE stop_aliases SET stop_id = ?, alias = ? WHERE alias_owner = ? AND stop_id = ? AND alias = ?`,
+            [user_input.command[0], user_input.command[1], user_number, fav_res[0].stop_id|0 , fav_res[0].alias   ]);
+
+
+            if(fav_res.length >= 2){
+                await Promise_pool.execute(`DELETE FROM stop_aliases WHERE stop_id = ? AND alias = ? AND alias_owner = ?`,[
+                    fav_res[1].stop_id , fav_res[1].alias , fav_res[1].alias_owner
+                ]);
+            }
+            return `Updated Favorite!\n\n@ ${user_input.command[1]} \nCorresponding Stop: ${user_input.command[0]}\n\nPreviously known as:\n( ${fav_res[0].alias} )`
+            //Updated message, old stop to new
+        } else {
+            await Promise_pool.execute(`INSERT INTO stop_aliases (stop_id, alias, alias_owner) VALUES (?,?,?)`, 
+            [user_input.command[0],user_input.command[1], user_number ])
+            return `New Favorite created! \n ${user_input.command[1]}`
+        }
+
 
 
     }
@@ -111,4 +142,6 @@ let input_parse = async (user_input,user_number) => {
 
 }
 
-console.log(input_parse('  $ 2242   900','12899282058'));
+module.exports = {
+    input_parse
+}

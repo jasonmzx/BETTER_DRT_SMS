@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 const db = require('../database_pool.js')
 
 
-const expiration = 60000
+const expiration = 60000 
 
 let user_auth = async (user_number) => {
 
@@ -17,7 +17,7 @@ let user_auth = async (user_number) => {
     const [init_query,init_fields] = await Promise_pool.query("SELECT * FROM `users` WHERE user_number = ?",[user_number]);
     if(!init_query.length){
         await Promise_pool.execute("INSERT INTO `users` (user_number, user_expiry) VALUES (?,?)", [user_number, Date.now() + expiration]);
-        return
+        return [user_number, 0] 
     } else {
         //If User is expired:
         if(init_query[0].user_expiry <= Date.now()){

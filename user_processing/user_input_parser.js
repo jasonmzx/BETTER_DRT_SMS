@@ -44,7 +44,7 @@ let input_parse = async (user_input,user_number) => {
         let input_fetch_validation = async (action_type) => {
             //Number of arguments checker:
             if(user_input.command.length > 2 || !(user_input.command.length) ){
-                return {error_msg: 'Invalid amount of arguments.'}
+                return `Invalid amount of arguments.\n\nTry something like this:\n${action_type == 1 ? prefixSetting.realtime_fetch : prefixSetting.static_fetch}<stop OR alias> <route (optional)>`
             }
             
             //Make sure route_filter is an integer
@@ -64,7 +64,7 @@ let input_parse = async (user_input,user_number) => {
                         route_filter: user_input.command[1] ? user_input.command[1]|0 : null 
                     }
                 } else {
-                    return {error_msg: 'Alias not found.'}
+                    return 'Alias not found.'
                 }   
 
             } else {
@@ -78,7 +78,7 @@ let input_parse = async (user_input,user_number) => {
                         route_filter: user_input.command[1] ? user_input.command[1]|0 : null 
                     }
                 } else {
-                    return {error_msg: 'Invalid stop.'}
+                    return 'Invalid stop.'
                 }
             }
             
@@ -96,19 +96,19 @@ let input_parse = async (user_input,user_number) => {
     } else if(user_input.prefix == prefixSetting.favorite){
         //Make sure it's just stop and alias
         if(user_input.command.length != 2){
-            return {error_msg: 'Invalid amount of arguments.'}
+            return 'Invalid amount of arguments.'
         }    
 
         //Alias must be isNaN() == true
         if(!(isNaN(user_input.command[1]))){
-            return {error_msg: 'Alias must contain atleast 1 alphabetical character'}
+            return 'Alias must contain atleast 1 alphabetical character'
         }
 
         //Check if StopID exists:
          const[res,inf] = await Promise_pool.query(`SELECT * FROM stops WHERE stop_id = ?`,[user_input.command[0]])
         console.log(res);
         if(!res.length){
-            return {error_msg: `Stop ID not found.`}
+            return `Stop ID not found.`
         }
 
         //Check Stop Aliases (Favorites List) if entry exists:
@@ -136,7 +136,7 @@ let input_parse = async (user_input,user_number) => {
         }
 
 
-
+ 
     }
 
 

@@ -23,26 +23,24 @@ better_drt_sms.post('/sms', async (req,res)=> {
     //Twiml response:
     const twiml = new MessagingResponse();
 
-    let send_response = (message) => {
-        twiml.message(message);
+    let send_response = (message, expiry_state) => {
+        twiml.message(message + (expiry_state ? "\nYou've Expired!" : ''));
         res.writeHead(200, { 'Content-Type': 'text/xml' });
         res.end(twiml.toString());
     }
 
 //app
     // const twiml = new MessagingResponse();
-
+    
     const user = await u_auth.user_auth(req.body.From);
     console.log(user);
     //console.log(`Authenticated ${user[0]}, [${user[1] ? 'Expired' : 'Not expired'}]`)
     //Send message to user if he's expired
-    if(user[1]){
-        send_response(`You're expired!`);
-    } 
+ 
 
     const input_parser_response = await u_parse.input_parse(req.body.Body,user[0]);
     if(typeof input_parser_response === 'string'){
-        send_response(input_parser_response);
+        send_response(input_parser_response,user[1]);
     }
 
 

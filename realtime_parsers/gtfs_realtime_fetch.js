@@ -1,73 +1,87 @@
 var request = require('request');
 const util = require('util');
-var gtfs_rt = require('./gtfs_realtime.js');
+var gtfs_rt = require('./gtfs_realtime.js'); //Local file
 const dateLib = require('date-and-time');
 
 const mysql = require('mysql2');
 const { resolve } = require('path');
-//Create MYSQL connection:
 
-const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'drt_sms_db',
-    multipleStatements: true
-});
-
-
+//Import local Database Pool:
+const db = require('../database_pool.js')
+//Binding query to promise (Creating a db.promise() object would be valid aswell )
 const query = util.promisify(db.query).bind(db);
 
+//Transfer Checker:
+let transfer_check = (trip_data) => {
+    let same_trip = []
 
-let stopDataFormat = async (tripData) => {
+    trip_data.forEach((trip,index) => {
+        same_trip.push([])
+        //Basically a filter function:  
+        trip_data.forEach((filt_trip,filt_index) => {
+            if(trip.vehicleId == filt_trip.vehicleId){
+                //If the filter_index isn't in any other tuple (array of 2 elements):
+                if( !((same_trip.filter(tuple => tuple[0] == filt_index || tuple[1] == filt_index)).length) ){
+                    same_trip[index].push(filt_index);}
+                return 
+            }
+        });
+    });
+
+    return same_trip.filter(tup => tup.length);
+
+}
+
+
+let stop_data_format = async (trip_data,route_filter) => {
     //Sorting tripData
-    if(!tripData.length){
-        return "No dat"
+    trip_data.sort((a, b) => a.arrivalTime - b.arrivalTime); //Sort into Increasing format..
+
+    let trip_ref_array = transfer_check(trip_data);
+
+    if( !(trip_ref_array.some(t => t.length>1)) ){
+        trip_data = trip_data.filter(trip => trip.routeId == route_filter);
+        trip_ref_array = transfer_check(trip_data);
     }
-    tripData.sort((a, b) => a.arrivalTime - b.arrivalTime); //Sort into Increasing format..
 
-    //trips Query (for headsigns)
+    if(!trip_data.length){ //Callback to static
+        return 'No Data Available!' 
+    } 
 
-    /*
-    The trips_query object assigns a dictionary to the result of a select query (on the
-    Table: trips) where trip_id is equal to all the trip_id's of the tripData.
-    - tripData is mapped in function of each trip id, 
-        then formatted into a MySQL array -> ('elm','elm','elm')
-    - The result of the select query on the trips Table is then formatted into dictionary
-        as trip_Id : trip_headsign form. 
-    (Headsigns are used to differentiate different variations of the same route)
-    */
+    console.log(trip_ref_array);
+
+    /*This function sorts the the trip_id element of all realtime trip_data and matches it-
+      to Headsigns that corresspond to said trip_id */
     const trips_query = Object.assign({}, 
-            ...(await query(`SELECT * FROM trips WHERE trip_id IN ${"('"+(tripData.map(t => t.tripId)).join(`','`)+"')"}`)) 
-            .map( (x) => ({[x.trip_id]: x.trip_headsign}) ));
+        ...(await query(`SELECT * FROM trips WHERE trip_id IN ${"('"+(trip_data.map(t => t.tripId)).join(`','`)+"')"}`)) 
+        .map( (x) => ({[x.trip_id]: x.trip_headsign}) ));
     
-    console.log(trips_query)
-
     //Stop Query (for stop name & wheelchair access)
-    const stopInfo = await query(`SELECT * FROM stops WHERE stop_id = ?`,[tripData[0].stopId]);
-    
+    const stop_info_query = await query(`SELECT * FROM stops WHERE stop_id = ?`,[trip_data[0].stopId]);
 
     //Header of string:
-    let formatted = stopInfo[0].stop_name + "\n" + 'Wheelchair Access' + ( stopInfo[0].wheelchair_access ? ` Available` : ` Not Available` ) + '\n\n'
-    tripData.forEach(trip => {
-        //Appending each trip (formatted) -> [routeId (e.g 900) , arrivalTime (e.g 1:23 PM), arrival Time in minutes (e.g arrival in X minutes)]
-        formatted += `ROUTE ${trip.routeId} - ${dateLib.format(new Date(trip.arrivalTime*1000),'hh:mm A' )}\n${trips_query[trip.tripId]}\n* Arrival in ${ Math.ceil((trip.arrivalTime - (Date.now()/1000))/60)} minute(s)\n\n`
-});
-    //console.log(formatted);
+    let formatted = stop_info_query[0].stop_name + "\n" + 'Wheelchair Access' + ( stop_info_query[0].wheelchair_access ? ` Available` : ` Not Available` ) + '\n\n'
+
+    trip_ref_array.forEach(trip_arr => {
+        if(trip_arr.length == 2){
+            const trips = { first: trip_data[trip_arr[0]], second: trip_data[trip_arr[1]] }
+            formatted += 'ROUTE TRANSFER ('+ trips.first.routeId+' - '+trips.second.routeId+') '+
+            '\n> '+trips_query[trips.first.tripId] + ' - ' + trips_query[trips.second.tripId]
+            +'\n* Arrival in '+ Math.round((trips.first.arrivalTime - (Date.now()/1000))/60)+' minute(s) @ '+ dateLib.format(new Date(trips.first.arrivalTime*1000),'h:mm A' )+ '\n\n'
+        } else {
+            formatted += 'ROUTE '+trip_data[trip_arr[0]].routeId+' - '+ dateLib.format(new Date(trip_data[trip_arr[0]].arrivalTime*1000),'h:mm A' )
+            +'\n* Arrival in '+ Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60) +' minute(s)' + '\n\n'
+        }
+    });
 
     return formatted
 }
 
-let dataFetch = async (stop_number, route_filter) => {
-    if (route_filter != null){
-        return stopDataFormat(
-        await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ? AND routeId = ?', [stop_number, route_filter])
-        );
-    } else {
-        return stopDataFormat(
-        await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number])
+let data_fetch = async (stop_number, route_filter) => {
+        return stop_data_format(
+        await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]) , route_filter
         )
-    };
+ 
 }
 
 
@@ -82,10 +96,10 @@ let gtfs_parse = async (stop_number,route_filter) => {
 
     if (current_time >= init_data[0].expiryTime ) {
         await gtfs_rt.db_insert_realtime();
-        console.log(await dataFetch(stop_number,route_filter));
+        console.log(await data_fetch(stop_number,route_filter));
 
     } else {
-        console.log(await dataFetch(stop_number,route_filter));
+        console.log(await data_fetch(stop_number,route_filter));
     }
 
 
@@ -94,7 +108,7 @@ let gtfs_parse = async (stop_number,route_filter) => {
    
 }
 
-console.log(gtfs_parse(1593,null));
+console.log(gtfs_parse(2242,'0b100100011'));
 
 // let gtfs_test = async () => {
 //     console.time("1");

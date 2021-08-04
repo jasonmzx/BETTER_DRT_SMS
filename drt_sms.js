@@ -41,8 +41,19 @@ better_drt_sms.post('/sms', async (req,res)=> {
     const input_parser_response = await u_parse.input_parse(req.body.Body,user[0]);
     if(typeof input_parser_response === 'string'){
         send_response(input_parser_response,user[1]);
-    }
+    } else {
+        //Realtime fetch:
+        if(input_parser_response.action == 1){
+        
 
+            
+        //Static fetch:    
+        } else {
+
+        }
+
+    }
+    
 
 });
 

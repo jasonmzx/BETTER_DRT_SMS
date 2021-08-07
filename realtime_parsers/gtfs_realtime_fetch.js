@@ -1,9 +1,8 @@
 var request = require('request');
 const util = require('util');
 var gtfs_rt = require('./gtfs_realtime.js'); //Local file
-const dateLib = require('date-and-time');
+const date_lib = require('date-and-time');
 
-const mysql = require('mysql2');
 const { resolve } = require('path');
 
 //Import local Database Pool:
@@ -67,16 +66,17 @@ let stop_data_format = async (trip_data,route_filter) => {
             const trips = { first: trip_data[trip_arr[0]], second: trip_data[trip_arr[1]] }
             formatted += 'ROUTE TRANSFER ('+ trips.first.routeId+' - '+trips.second.routeId+') '+
             '\n> '+trips_query[trips.first.tripId] + ' - ' + trips_query[trips.second.tripId]
-            +'\n* Arrival in '+ Math.round((trips.first.arrivalTime - (Date.now()/1000))/60)+' minute(s) @ '+ dateLib.format(new Date(trips.first.arrivalTime*1000),'h:mm A' )+ '\n\n'
+            +'\n* Arrival in '+ Math.round((trips.first.arrivalTime - (Date.now()/1000))/60)+' minute(s) @ '+ date_lib.format(new Date(trips.first.arrivalTime*1000),'h:mm A' )+ '\n\n'
         } else {
-            formatted += 'ROUTE '+trip_data[trip_arr[0]].routeId+' - '+ dateLib.format(new Date(trip_data[trip_arr[0]].arrivalTime*1000),'h:mm A' )
-            +'\n* Arrival in '+ Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60) +' minute(s)' + '\n\n'
+            formatted += 'ROUTE '+trip_data[trip_arr[0]].routeId+' > '+trips_query[trip_data[trip_arr[0]].tripId]
+            +'\n* Arrival in '+ Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60) +' minute(s) @ ' + date_lib.format(new Date(trip_data[trip_arr[0]].arrivalTime*1000),'h:mm A' ) + '\n\n'
         }
     });
 
     return formatted
 }
 
+//This data fetch function will be removed:
 let data_fetch = async (stop_number, route_filter) => {
         return stop_data_format(
         await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]) , route_filter
@@ -96,10 +96,16 @@ let gtfs_parse = async (stop_number,route_filter) => {
 
     if (current_time >= init_data[0].expiryTime ) {
         await gtfs_rt.db_insert_realtime();
-        console.log(await data_fetch(stop_number,route_filter));
+        console.log(await data_fetch(stop_number,route_filter)); //Remove these too
+        return stop_data_format(
+            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]) , route_filter
+            )
 
     } else {
-        console.log(await data_fetch(stop_number,route_filter));
+        console.log(await data_fetch(stop_number,route_filter)); //Remove these too
+        return stop_data_format(
+            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]) , route_filter
+            )
     }
 
 
@@ -108,7 +114,7 @@ let gtfs_parse = async (stop_number,route_filter) => {
    
 }
 
-console.log(gtfs_parse(2242,'0b100100011'));
+console.log(gtfs_parse(1593,900));
 
 // let gtfs_test = async () => {
 //     console.time("1");

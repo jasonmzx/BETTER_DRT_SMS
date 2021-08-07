@@ -66,7 +66,6 @@ fs.readFile(trips, 'utf8', function(trip_err,trip_data) {
                 departure_time = "${parseInt(st_array[2].slice(0,2))*60 + parseInt(st_array[2].slice(3,5))}",
                 orientation = "${t_array[7]}"
                 `, (p_err,p_res) =>{
-                console.log(p_res);
                 if(p_err) throw p_err
 
                 });

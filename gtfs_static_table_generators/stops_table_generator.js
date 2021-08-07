@@ -1,3 +1,6 @@
+//CREATE TABLE static_times(routeId SMALLINT UNSIGNED, serviceId VARCHAR(20), tripId VARCHAR(70), stopId MEDIUMINT UNSIGNED, arrivalTime INT UNSIGNED, orientation VARCHAR(70), tripHeadsign VARCHAR(80));
+
+
 var fs = require('fs') , filename = 'stops.txt';
 const mysql = require('mysql');
 //Create MYSQL connection:

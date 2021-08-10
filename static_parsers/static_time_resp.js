@@ -41,11 +41,26 @@ let transfer_check = (trip_data) => {
 let route_pattern_sort = (trip_ref_arr , trip_query) => {
     let formattedData = {'transfers':[]}
 
+    const orientation_shorten = (o) => {
+        switch (o) {
+            case 'Westbound':
+                return '- WB';
+            case 'Eastbound':
+                return '- EB';
+            case 'Northbound':
+                return '- NB';
+            case 'Southbound':
+                return '- SB';
+            default:
+                return '';
+        }
+    }
+
     trip_ref_arr.forEach( (trip,index) => {
         if(trip.length > 1){
             formattedData['transfers'].push(trip); 
         } else {
-            const route_class = `${trip_query[trip[0]].routeId} ${trip_query[trip[0]].orientation}`
+            const route_class = `${trip_query[trip[0]].routeId} ${trip_query[trip[0]].tripHeadsign} ${orientation_shorten(trip_query[trip[0]].orientation)}`
 
             if(trip.length > 1){
                 formattedData['transfers'].push(trip); 
@@ -62,48 +77,98 @@ let route_pattern_sort = (trip_ref_arr , trip_query) => {
 }
 
 // Static Route data formatter:
-let static_data_format = (trip_ref_obj, static_query_split) => {
-    const max_visible = 0
+let static_data_format = async (trip_ref_obj, static_query_split,stop_number) => {
 
+    const Promise_pool = db.promise();
+
+    let max_visible = 5
     let formatted_obj = {}
-    let formatted = ''
 
-    const orientation_shorten = (o) => {
-        switch (o) {
-            case 'Westbound':
-                return 'WB';
-            case 'Eastbound':
-                return 'EB';
-            case 'Northbound':
-                return 'NB';
-            case 'Southbound':
-                return 'SB';
-            default:
-                return '';
-        }
-    }
-
+    //Create formatted_obj with all the route_key's from today.
     Object.keys(trip_ref_obj.today).splice(1).forEach(route_key => {
         if(!(Object.keys(formatted_obj).includes(route_key))){
             formatted_obj[route_key] = []
         }
-        trip_ref_obj.today[route_key].forEach( (trip,trip_index) => {
-            formatted_obj[route_key].push({
-                arrivalTime: static_query_split.today[trip_ref_obj.today[route_key][trip_index]].arrivalTime,
-                tripHeadsign: static_query_split.today[trip_ref_obj.today[route_key][trip_index]].tripHeadsign,
-                orientation: orientation_shorten(static_query_split.today[trip_ref_obj.today[route_key][trip_index]].orientation)
-            })
-        });
+        //Push today's trips
+        //trip_ref_obj.today[route_key].forEach( (trip,trip_index) => {
+        for(const [trip_index,trip] of (trip_ref_obj.today[route_key]).entries() ) {
+            //Make sure the amount of trips in every key is the same as max_visible (This is done so the user isn't flooded with info)
+            if( formatted_obj[route_key].length < max_visible ){
+                console.log(trip_ref_obj.today[route_key][trip_index]);
+
+                formatted_obj[route_key].push({
+                    arrivalTime: static_query_split.today[trip_ref_obj.today[route_key][trip_index]].arrivalTime, //Arrival Time
+                    day: 'today',
+                    format_break: 0
+                    //tripHeadsign: static_query_split.today[trip_ref_obj.today[route_key][trip_index]].tripHeadsign, //Trip Headsign
+                    //orientation: orientation_shorten(static_query_split.today[trip_ref_obj.today[route_key][trip_index]].orientation), //Orientation (if it's direction bound)
+
+                })
+            } else { break }
+        };
+
     });
 
+    //Tomorrow's pushes:
+    for (const route_key of Object.keys(formatted_obj)){
+        if(trip_ref_obj.tmrw[route_key] && formatted_obj[route_key].length < max_visible){
+            for(const [trip_index,trip] of (trip_ref_obj.tmrw[route_key]).entries() ){
+                //console.log(trip_index);
+                if( formatted_obj[route_key].length < max_visible ){
+                formatted_obj[route_key].push(
+                    {
+                        arrivalTime: static_query_split.tmrw[trip_ref_obj.tmrw[route_key][trip_index]].arrivalTime, //Arrival Time
+                        day: 'tmrw',
+                        format_break: formatted_obj[route_key][formatted_obj[route_key].length-1].day == 'today' ? 1 : 0 //This allows the String generater to know when there is a new line
+                        //tripHeadsign: static_query_split.tmrw[trip_ref_obj.tmrw[route_key][trip_index]].tripHeadsign, //Trip Headsign
+                        //orientation: orientation_shorten(static_query_split.tmrw[trip_ref_obj.tmrw[route_key][trip_index]].orientation), //Orientation (if it's direction bound)
+                    })
+                }
+            }        
+        }
+    }
 
-    if( trip_ref_obj.today.transfers || trip_ref.tmrw.transfers ){
+
+
+
+    if( trip_ref_obj.today.transfers.length /*|| trip_ref.tmrw.transfers*/ ){
+        formatted_obj['transfers'] = [];
+        console.log(static_query_split.today[trip_ref_obj.today.transfers[0][0]]);
         for(let i = 0; i < max_visible; i++){
-            console.log("Transfers")
+            if(i == trip_ref_obj.today.transfers.length) { break }
+            formatted_obj['transfers'].push({
+                route_transfer: static_query_split.today[trip_ref_obj.today.transfers[i][0]].routeId +" - "+static_query_split.today[trip_ref_obj.today.transfers[i][1]].routeId,
+                tripHeadsign: static_query_split.today[trip_ref_obj.today.transfers[i][0]].arrivalTime 
+            });    
         }    
     }
 
     console.log(formatted_obj);
+
+    //Stop Query (for stop name & wheelchair access)
+    const stop_info_query = await Promise_pool.query(`SELECT * FROM stops WHERE stop_id = ?`,[stop_number]);
+    //console.log(stop_info_query[0][0].stop_id);
+
+    let formatted = stop_info_query[0][0].stop_name + '\n' + 'Wheelchair Access' + ( stop_info_query[0][0].wheelchair_access ? ` Available` : ` Not Available`) + '\n' + '* SCHEDULED DATA *'+'\n\n';
+
+    Object.keys(formatted_obj).forEach(route_key => {
+
+        formatted += route_key + '\n'
+        console.log(route_key);
+
+        formatted_obj[route_key].forEach(trip => {
+            if(!trip.format_break){
+                formatted += '- '+date_lib.format(new Date(trip.arrivalTime*60000+1.8e+7),'h:mm A' )+'\n'
+            } else{
+                formatted += "Tomorrow's trips:\n"+'- '+date_lib.format(new Date(trip.arrivalTime*60000+1.8e+7),'h:mm A' )+'\n'
+            }
+        });
+
+    });
+
+
+    return formatted;
+
 }
 
 let static_parse = async (stop_number, route_filter) =>{
@@ -151,28 +216,25 @@ let static_parse = async (stop_number, route_filter) =>{
             trip_ref_obj.tmrw = transfer_check(static_query_split.tmrw);
         }
     }
-    console.log(trip_ref_obj);
 
     //Sorting route patterns:
     trip_ref_obj.today = route_pattern_sort(trip_ref_obj.today , static_query_split.today);
     trip_ref_obj.tmrw = route_pattern_sort(trip_ref_obj.tmrw, static_query_split.tmrw);
 
-
+    /* DEBUG
+    console.log(trip_ref_obj);
+    console.log(daw_list)
+    console.log(now_in_min);
+    */
 
     //Formatting:
-    static_data_format(trip_ref_obj, static_query_split);
-
-    console.log(trip_ref_obj);
-    console.log(static_query_split.tmrw[trip_ref_obj.tmrw['980 Westbound'][0][0]] ); 
-    // console.log(daw_list)
-    // console.log(now_in_min);
+    return await static_data_format(trip_ref_obj, static_query_split,stop_number);
 
 
-
-
-    //console.log(static_query_split.today)
 
 
 }
 
-static_parse(1593);
+module.exports = {
+    static_parse
+}

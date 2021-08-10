@@ -7,8 +7,11 @@ const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const twilio = require("twilio");
 
 //Local files:
-const u_auth = require('./user_processing/user_auth')
-const u_parse = require('./user_processing/user_input_parser')
+const u_auth = require('./user_processing/user_auth');
+const u_parse = require('./user_processing/user_input_parser');
+const realtime_parse = require('./realtime_parsers/gtfs_realtime_parser');
+const static_parse = require('./static_parsers/static_time_resp');
+const { stat } = require('fs');
 
 //MySQL
 
@@ -44,12 +47,11 @@ better_drt_sms.post('/sms', async (req,res)=> {
     } else {
         //Realtime fetch:
         if(input_parser_response.action == 1){
-        
-
-            
+            console.log(input_parser_response);    
+            send_response(await realtime_parse.gtfs_parse(input_parser_response.stop_id,input_parser_response.route_filter));
         //Static fetch:    
         } else {
-
+            send_response(await static_parse.static_parse(input_parser_response.stop_id,input_parser_response.route_filter));
         }
 
     }

@@ -33,14 +33,19 @@ let transfer_check = (trip_data) => {
 
 
 let stop_data_format = async (trip_data,route_filter) => {
+    console.log("RECIEVED:");
+    console.log(trip_data);
+    console.log(route_filter);
     //Sorting tripData
     trip_data.sort((a, b) => a.arrivalTime - b.arrivalTime); //Sort into Increasing format..
 
     let trip_ref_array = transfer_check(trip_data);
 
-    if( !(trip_ref_array.some(t => t.length>1)) ){
-        trip_data = trip_data.filter(trip => trip.routeId == route_filter);
-        trip_ref_array = transfer_check(trip_data);
+    if(route_filter){
+        if( !(trip_ref_array.some(t => t.length>1)) ){
+            trip_data = trip_data.filter(trip => trip.routeId == route_filter);
+            trip_ref_array = transfer_check(trip_data);
+        }
     }
 
     if(!trip_data.length){ //Callback to static
@@ -79,7 +84,7 @@ let stop_data_format = async (trip_data,route_filter) => {
 //This data fetch function will be removed:
 let data_fetch = async (stop_number, route_filter) => {
         return stop_data_format(
-        await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]) , route_filter
+        await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]), route_filter
         )
  
 }
@@ -96,15 +101,15 @@ let gtfs_parse = async (stop_number,route_filter) => {
 
     if (current_time >= init_data[0].expiryTime ) {
         await gtfs_rt.db_insert_realtime();
-        console.log(await data_fetch(stop_number,route_filter)); //Remove these too
+        //console.log(await data_fetch(stop_number,route_filter)); //Remove these too
         return stop_data_format(
-            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]) , route_filter
+            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number])
             )
 
     } else {
-        console.log(await data_fetch(stop_number,route_filter)); //Remove these too
+        //console.log(await data_fetch(stop_number,route_filter)); //Remove these too
         return stop_data_format(
-            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]) , route_filter
+            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number])
             )
     }
 
@@ -114,7 +119,7 @@ let gtfs_parse = async (stop_number,route_filter) => {
    
 }
 
-console.log(gtfs_parse(1593,900));
+//console.log(gtfs_parse(2078,216));
 
 // let gtfs_test = async () => {
 //     console.time("1");
@@ -123,3 +128,6 @@ console.log(gtfs_parse(1593,900));
 // }
 
 // gtfs_test();
+module.exports = {
+    gtfs_parse
+}

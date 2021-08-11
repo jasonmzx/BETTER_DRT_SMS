@@ -1,6 +1,9 @@
+//CREATE TABLE static_times(routeId SMALLINT UNSIGNED, serviceId VARCHAR(20), tripId VARCHAR(70), stopId MEDIUMINT UNSIGNED, arrivalTime INT UNSIGNED, orientation VARCHAR(70), tripHeadsign VARCHAR(80));
+
 //This file generates the static_times table (Roughly 186k rows will be generated...)
 const mysql = require('mysql2')
 
+//Using a seperate connection here due to the extremely large database being generated. (Pool connection times out)
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',

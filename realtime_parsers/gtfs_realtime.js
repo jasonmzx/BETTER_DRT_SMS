@@ -55,6 +55,8 @@ let db_insert_realtime = async () => {
   Example: All stop_times from result.entity[0] will count as 20 rows (1 for each stop time)
   */
 
+  
+  //This specific situation uses A new connection since it's faster then using the Connection Pool 
   const db = await mysql.createConnection({
     host: 'localhost',
     user: 'root',

@@ -1,4 +1,4 @@
-//CREATE TABLE stops(trip_id VARCHAR(120), trip_headsign VARCHAR(150),direction VARCHAR(70))
+//CREATE TABLE trips(trip_id VARCHAR(120), trip_headsign VARCHAR(150),direction VARCHAR(70))
 
 //Importing database pool:
 const db = require('../database_pool.js');

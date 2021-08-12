@@ -1,2 +1,8 @@
 static_times
 CREATE TABLE static_times(routeId SMALLINT UNSIGNED, serviceId VARCHAR(20), tripId VARCHAR(70), stopId MEDIUMINT UNSIGNED, arrivalTime INT UNSIGNED, orientation VARCHAR(70), tripHeadsign VARCHAR(80));
+
+stops
+CREATE TABLE stops(stop_id MEDIUMINT UNSIGNED, stop_name VARCHAR(100), wheelchair_access TINYINT)
+
+trips
+CREATE TABLE trips(trip_id VARCHAR(120), trip_headsign VARCHAR(150),direction VARCHAR(70))

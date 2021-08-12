@@ -51,6 +51,7 @@ better_drt_sms.post('/sms', async (req,res)=> {
             send_response(await realtime_parse.gtfs_parse(input_parser_response.stop_id,input_parser_response.route_filter));
         //Static fetch:    
         } else {
+            console.log(input_parser_response);  
             send_response(await static_parse.static_parse(input_parser_response.stop_id,input_parser_response.route_filter));
         }
 

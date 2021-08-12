@@ -1,7 +1,9 @@
 //Imported libs
 
+
 //Local files
 const db = require('../database_pool.js')
+//const generate_js = require('../generate')
 
 /*
 list of commands:
@@ -52,8 +54,18 @@ let input_parse = async (user_input,user_number) => {
                 return `Invalid amount of arguments.\n\nTry something like this:\n${action_type == 1 ? prefixSetting.realtime_fetch : prefixSetting.static_fetch}<stop OR alias> <route (optional)>`
             }
             
-            //Make sure route_filter is an integer
-            if(user_input.command[1] && isNaN(user_input.command[1])){ return {error_msg: "Route Filter is invalid."}}
+            if(user_input.command[1]){
+
+                const {readFile } = require('fs/promises'), routes = './mysql_table_generators/STATIC_FILES'+'/routes.json';
+
+                let route_json = await readFile(routes);
+
+                if( !(JSON.parse(route_json).includes(parseInt(user_input.command[1]))) ){
+                    return "Route Filter is invalid."
+                }
+
+            }
+
 
             if(isNaN(user_input.command[0])){
                 //Check if Favorite (alias) Exists query:
@@ -193,6 +205,7 @@ let input_parse = async (user_input,user_number) => {
 
 
 }
+
 
 
 

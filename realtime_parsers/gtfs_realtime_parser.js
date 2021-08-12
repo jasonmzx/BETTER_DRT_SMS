@@ -33,16 +33,20 @@ let transfer_check = (trip_data) => {
 
 
 let stop_data_format = async (trip_data,route_filter) => {
-    console.log("RECIEVED:");
-    console.log(trip_data);
-    console.log(route_filter);
+    console.log(`RECIEVED: route_filter: ${route_filter}`);
+    //console.log(trip_data);
+    //console.log(route_filter);
     //Sorting tripData
-    trip_data.sort((a, b) => a.arrivalTime - b.arrivalTime); //Sort into Increasing format..
+    trip_data.sort((a, b) => a.arrivalTime - b.arrivalTime); //Sort into Increasing format.. small_num > big_num
 
     let trip_ref_array = transfer_check(trip_data);
 
+
+
     if(route_filter){
+        console.log("ROUTE FILTER!")
         if( !(trip_ref_array.some(t => t.length>1)) ){
+            console.log('Yep, gets here')
             trip_data = trip_data.filter(trip => trip.routeId == route_filter);
             trip_ref_array = transfer_check(trip_data);
         }
@@ -81,13 +85,6 @@ let stop_data_format = async (trip_data,route_filter) => {
     return formatted
 }
 
-//This data fetch function will be removed:
-let data_fetch = async (stop_number, route_filter) => {
-        return stop_data_format(
-        await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]), route_filter
-        )
- 
-}
 
 
 let gtfs_parse = async (stop_number,route_filter) => {
@@ -101,15 +98,15 @@ let gtfs_parse = async (stop_number,route_filter) => {
 
     if (current_time >= init_data[0].expiryTime ) {
         await gtfs_rt.db_insert_realtime();
-        //console.log(await data_fetch(stop_number,route_filter)); //Remove these too
         return stop_data_format(
-            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number])
+                await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]), 
+                route_filter
             )
 
     } else {
-        //console.log(await data_fetch(stop_number,route_filter)); //Remove these too
         return stop_data_format(
-            await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number])
+                await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]), 
+                route_filter
             )
     }
 

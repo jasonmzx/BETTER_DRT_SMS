@@ -1,9 +1,6 @@
-//Imported libs
-
 
 //Local files
 const db = require('../database_pool.js')
-//const generate_js = require('../generate')
 
 /*
 list of commands:
@@ -24,20 +21,24 @@ let input_parse = async (user_input,user_number) => {
 
 
     user_input = user_input.trim();
-    console.log(user_input);
 
     //Prefix (@,! or $) , Command
     user_input = {
         prefix: user_input.slice(0,1) , 
         command: ( user_input.slice(1,user_input.length) ).toLowerCase() }; 
-    
+        
     //Splitting & Filtering Command string for any excess spaces:
     user_input.command = (user_input.command).split` `.filter(elm => elm)
     
-    const prefixSetting = {
-        realtime_fetch : "@", //action: 1
+    const prefix_settings = {
+        realtime_fetch : "@", //action: 1 
         static_fetch : "#", //action: 2
-        favorite : "$" //action: 3
+        favorite : "$" 
+    }
+
+    //Checking if the prefix is valid:
+    if( !(Object.values(prefix_settings).includes(user_input.prefix))){
+        return `Invalid Command!`
     }
 
     //Assigning the DB Pool object into Promise form.
@@ -51,7 +52,7 @@ let input_parse = async (user_input,user_number) => {
         let input_fetch_validation = async (action_type) => {
             //Number of arguments checker:
             if(user_input.command.length > 2 || !(user_input.command.length) ){
-                return `Invalid amount of arguments.\n\nTry something like this:\n${action_type == 1 ? prefixSetting.realtime_fetch : prefixSetting.static_fetch}<stop OR alias> <route (optional)>`
+                return `Invalid amount of arguments.\n\nTry something like this:\n${action_type == 1 ? prefix_settings.realtime_fetch : prefix_settings.static_fetch}<stop OR alias> <route (optional)>`
             }
             
             if(user_input.command[1]){
@@ -102,25 +103,23 @@ let input_parse = async (user_input,user_number) => {
         };
 
     //Alias Array Mapper
-    let alias_map = (arr_query) => {
+    let alias_map = (arr_query,page_index) => {
         console.log(arr_query)
-        let formatted_arr = arr_query.map(elm => "* "+elm.alias+" - Stop ID: "+elm.stop_id+"\n"+elm.stop_name);
-        formatted_arr = formatted_arr.join('\n');
+        let formatted_arr =arr_query.map(elm => "* "+elm.alias+" - Stop ID: "+elm.stop_id+"\n"+elm.stop_name+'\n');
+        formatted_arr = `Favorites P${page_index+1} :\n\n`+ formatted_arr.join('\n');
         return formatted_arr
     }
 
 
-    if(user_input.prefix == prefixSetting.realtime_fetch){
-        console.log("realtime")
+    if(user_input.prefix == prefix_settings.realtime_fetch){
         return await input_fetch_validation(1) //Realtime Fetch (action: 1)
 
-    } else if(user_input.prefix == prefixSetting.static_fetch) {
-        console.log("static")
+    } else if(user_input.prefix == prefix_settings.static_fetch) {
         return await input_fetch_validation(2) //Static Time Fetch (action: 2)
 
-    } else if(user_input.prefix == prefixSetting.favorite){
+    } else if(user_input.prefix == prefix_settings.favorite){
 
-        //Client is checking his Alias list!
+        //Client is checking his Alias list:
         if(user_input.command[0] == '$'){
             //If there is no number associated, default: 1
             let page_index = 0
@@ -147,7 +146,7 @@ let input_parse = async (user_input,user_number) => {
             // 0: Amount of full pages , 1 : Number of aliases remaining that can't complete a full page.
 
             if(all_res.length){
-            return alias_map(all_res);
+            return alias_map(all_res,page_index);
             } else {return 'Page not found.'}
 
 
@@ -159,7 +158,7 @@ let input_parse = async (user_input,user_number) => {
             return 'Invalid amount of arguments.'
         }    
 
-        //Alias must be isNaN() == true
+        //Alias must be isNaN() === true
         if(!(isNaN(user_input.command[1]))){
             return 'Alias must contain atleast 1 alphabetical character.'
         }
@@ -179,7 +178,8 @@ let input_parse = async (user_input,user_number) => {
         const[fav_res,fav_inf] = await Promise_pool.query('SELECT * FROM stop_aliases WHERE alias_owner = ? AND stop_id = ? OR alias = ?',
         [user_number,user_input.command[0],user_input.command[1]]
         );
-        console.log(fav_res);
+        
+        //console.log(fav_res);
 
         if(fav_res.length){
             await Promise_pool.execute(`UPDATE stop_aliases SET stop_id = ?, alias = ?, stop_name = ? WHERE alias_owner = ? AND stop_id = ? AND alias = ?`,
@@ -191,12 +191,12 @@ let input_parse = async (user_input,user_number) => {
                     fav_res[1].stop_id , fav_res[1].alias , fav_res[1].alias_owner
                 ]);
             }
-            return `Updated Favorite!\n\n@ ${user_input.command[1]} \nCorresponding Stop: ${user_input.command[0]}\n\nPreviously known as:\n( ${fav_res[0].alias} )`
+            return `Updated Favorite!\n\nNew Alias: ${user_input.command[1]} \nCorresponding Stop: ${user_input.command[0]}\n\nPreviously known as:\n( ${fav_res[0].alias} >> ${fav_res[0].stop_id} )`
             //Updated message, old stop to new
         } else {
             await Promise_pool.execute(`INSERT INTO stop_aliases (stop_id, alias, alias_owner, stop_name) VALUES (?,?,?,?)`, 
             [user_input.command[0],user_input.command[1], user_number,res[0].stop_name ])
-            return `New Favorite created! \n ${user_input.command[1]}`
+            return `New Favorite created! \n\n Alias: ${user_input.command[1]}\n Corresponding Stop: ${user_input.command[0]} \n (${res[0].stop_name})`
         }
 
 
@@ -205,9 +205,6 @@ let input_parse = async (user_input,user_number) => {
 
 
 }
-
-
-
 
 module.exports = {
     input_parse

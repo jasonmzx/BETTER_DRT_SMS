@@ -27,26 +27,27 @@ let transfer_check = (trip_data) => {
         });
     });
 
+    console.log('[gts_realtime_parser.js] >> Transfers have been checked.') //Server console
     return same_trip.filter(tup => tup.length);
 
 }
 
 
 let stop_data_format = async (trip_data,route_filter) => {
-    console.log(`RECIEVED: route_filter: ${route_filter}`);
+    //console.log(`RECIEVED: route_filter: ${route_filter}`);
     //console.log(trip_data);
     //console.log(route_filter);
     //Sorting tripData
     trip_data.sort((a, b) => a.arrivalTime - b.arrivalTime); //Sort into Increasing format.. small_num > big_num
+    console.log('[gts_realtime_parser.js] >> Data sorted.') //Server console
 
     let trip_ref_array = transfer_check(trip_data);
 
 
 
     if(route_filter){
-        console.log("ROUTE FILTER!")
+        console.log('[gts_realtime_parser.js] >> Filtering routes.')
         if( !(trip_ref_array.some(t => t.length>1)) ){
-            console.log('Yep, gets here')
             trip_data = trip_data.filter(trip => trip.routeId == route_filter);
             trip_ref_array = transfer_check(trip_data);
         }
@@ -56,7 +57,6 @@ let stop_data_format = async (trip_data,route_filter) => {
         return 'No Data Available!' 
     } 
 
-    console.log(trip_ref_array);
 
     /*This function sorts the the trip_id element of all realtime trip_data and matches it-
       to Headsigns that corresspond to said trip_id */
@@ -82,6 +82,7 @@ let stop_data_format = async (trip_data,route_filter) => {
         }
     });
 
+    console.log('[gts_realtime_parser.js] >> Formatting complete. Callback to Express Server!')
     return formatted
 }
 

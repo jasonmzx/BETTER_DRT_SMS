@@ -26,7 +26,7 @@ let user_auth = async (user_number) => {
             //Renew expiry:
             await Promise_pool.execute("UPDATE `users` SET user_expiry = ? WHERE user_number = ?;",[Date.now() + expiration, user_number]);
             
-            return [user_number, 1] //Returns user's number & expiry boolean (1 or true since he expired)
+            return [user_number, 1] //Returns user's number & expiry boolean (1 or true means he's expired)
         } 
         await Promise_pool.execute("UPDATE `users` SET user_expiry = ? WHERE user_number = ?;",[Date.now() + expiration, user_number]);
     }

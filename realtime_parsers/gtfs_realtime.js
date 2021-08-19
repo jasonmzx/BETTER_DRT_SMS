@@ -1,23 +1,12 @@
 var GtfsRealtimeBindings = require('gtfs-realtime-bindings');
 var request = require('request');
-const util = require('util');
 
-//MySQL
+//Importing local files:
+const mysql = require('../database_pool.js')
 
-const mysql = require('mysql2/promise');
-const { truncate } = require('fs');
-//Create MYSQL connection:
-// const db = mysql.createConnection({
-//   host: 'localhost',
-//   user: 'root',
-//   password: '',
-//   database: 'drt_sms_db',
-//   multipleStatements: true
-// });
 
-//Connect
-//GTFS reader 
 
+//This function is used to fetch the GTFS Realtime data, and decode it using the gtfs-realtime-bindings library.
 let read_gtfs = (data_url) => {
   return new Promise(resolve => {
     var requestSettings = {
@@ -36,7 +25,6 @@ let read_gtfs = (data_url) => {
 
 };
 
-// const query = util.promisify(db.query).bind(db);
 
 let db_insert_realtime = async () => {
   
@@ -45,29 +33,12 @@ let db_insert_realtime = async () => {
   } catch (err) {
     console.log(err);
   }
-
-  console.log("Length of GTFS file: " + result.entity.length)
-  //Clears table realtime_gtfs
-
-  /*
-  Appends new result.entity entries into table realtime_gtfs
-  Each entry is 1 stop_time within an element in the result.entity array
-  Example: All stop_times from result.entity[0] will count as 20 rows (1 for each stop time)
-  */
-
   
-  //This specific situation uses A new connection since it's faster then using the Connection Pool 
-  const db = await mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'drt_sms_db',
-    multipleStatements: true
-  });
-
+  const db = mysql.promise();
 
   const truncate_result = await db.execute('TRUNCATE TABLE realtime_gtfs')
-  console.log(truncate_result)
+
+  console.log("[gtfs_realtime.js] >> " + (truncate_result ? "TRUNCATED realtime_gtfs TABLE" : "*ERROR* TRUNCATING realtime_gtfs TABLE"));
 
   console.time("sql_append_query");
 
@@ -93,7 +64,7 @@ let db_insert_realtime = async () => {
 
   console.timeEnd("sql_append_query")
 
-  console.log("Completed!")
+  console.log("[gtfs_realtime.js] >> "+" realtime_gtfs TABLE QUERY Completed! \n")
 }
 
 

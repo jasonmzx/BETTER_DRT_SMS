@@ -7,6 +7,7 @@ const { resolve } = require('path');
 
 //Import local Database Pool:
 const db = require('../database_pool.js')
+
 //Binding query to promise (Creating a db.promise() object would be valid aswell )
 const query = util.promisify(db.query).bind(db);
 
@@ -117,15 +118,6 @@ let gtfs_parse = async (stop_number,route_filter) => {
    
 }
 
-//console.log(gtfs_parse(2078,216));
-
-// let gtfs_test = async () => {
-//     console.time("1");
-//     await gtfs_rt.db_insert_realtime();
-//     console.timeEnd("1");
-// }
-
-// gtfs_test();
 module.exports = {
     gtfs_parse
 }

@@ -68,8 +68,6 @@ let db_insert_realtime = async () => {
 }
 
 
-
-
 //Export Functions here
 module.exports ={
   db_insert_realtime

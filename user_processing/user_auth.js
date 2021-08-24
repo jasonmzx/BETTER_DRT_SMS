@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 const db = require('../database_pool.js')
 
 
-const expiration = 60000 
+const expiration = 1.21e+9
 
 let user_auth = async (user_number) => {
 

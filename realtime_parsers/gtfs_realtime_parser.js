@@ -98,7 +98,7 @@ let gtfs_parse = async (stop_number,route_filter) => {
     const init_data = await query('SELECT * FROM `realtime_gtfs` LIMIT 1');
     const current_time = Date.now();
 
-    if (current_time >= init_data[0].expiryTime || !(init_data.length) ) {
+    if (!(init_data.length) || current_time >= init_data[0].expiryTime) {
         await gtfs_rt.db_insert_realtime();
         return stop_data_format(
                 await query('SELECT * FROM `realtime_gtfs` WHERE stopId = ?', [stop_number]), 

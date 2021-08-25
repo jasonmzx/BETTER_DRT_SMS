@@ -71,12 +71,17 @@ let stop_data_format = async (trip_data,route_filter) => {
     //Header of string:
     let formatted = stop_info_query[0].stop_name + "\n" + 'Wheelchair Access' + ( stop_info_query[0].wheelchair_access ? ` Available` : ` Not Available` ) + '\n\n'
 
+    
+
+
     trip_ref_array.forEach(trip_arr => {
         if(trip_arr.length == 2){
             const trips = { first: trip_data[trip_arr[0]], second: trip_data[trip_arr[1]] }
             formatted += 'ROUTE TRANSFER ('+ trips.first.routeId+' - '+trips.second.routeId+') '+
             '\n> '+trips_query[trips.first.tripId] + ' - ' + trips_query[trips.second.tripId]
-            +'\n* Arrival in '+ Math.round((trips.first.arrivalTime - (Date.now()/1000))/60)+' minute(s) @ '+ date_lib.format(new Date(trips.first.arrivalTime*1000),'h:mm A' )+ '\n\n'
+            //
+           + ( Math.round((trips.first.arrivalTime - (Date.now()/1000))/60) ? ('\n* Arrival in '+ Math.round((trips.first.arrivalTime - (Date.now()/1000))/60)+' minute(s) @ ' ) : 'Bus has arrived. @')
+           + date_lib.format(new Date(trips.first.arrivalTime*1000),'h:mm A' )+ '\n\n' //Time it's coming (HH:MM)
         } else {
             formatted += 'ROUTE '+trip_data[trip_arr[0]].routeId+' > '+trips_query[trip_data[trip_arr[0]].tripId]
             +'\n* Arrival in '+ Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60) +' minute(s) @ ' + date_lib.format(new Date(trip_data[trip_arr[0]].arrivalTime*1000),'h:mm A' ) + '\n\n'

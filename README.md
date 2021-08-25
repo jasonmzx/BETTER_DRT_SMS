@@ -9,6 +9,15 @@ Tech Stack:
 * [JS GTFS-realtime Bindings](https://www.npmjs.com/package/gtfs-realtime-bindings) Is used to decode the realtime transit data being fetched from the [OpenData Durham](https://opendata.durham.ca/search?q=gtfs) website.
 * The [date-and-time](https://www.npmjs.com/package/date-and-time) library is used to format various timetables &amp; dates.
 
+Hosting:
+* A VPS ( Ubuntu 20.04 ) with a public IPv4 Address (Secured with password for SSH access to Ubuntu CLI) is the host to both express & MySQL servers. (services) <br>
+
+    - MySQL server is ran as a service. ```[sudo] service mysql start```  (express server connects locally to MySQL server.)
+
+    -  Unlike MySQL, NodeJS isn't ran in the background as a service, so [Tmux](https://tmuxcheatsheet.com/)  ( terminal multiplexer used to make sub-sessions within the SSH session ) is used to run the express server. This sub-session runs very similarly to service.<br>**SETUP:**<br>**1**. Type ``` tmux```in the SSH CLI to create a session.<br>**2**. Run node server once in session ```node drt_sms.js```<br>**Extra CMDS**:  ``` tmux ls``` to check all sessions.<br>```tmux attach -t <session name>``` to re-connect to sessions.
+
+    - Change Ubuntu timezone parameter since node app uses the operation system's date.<br>**>** ``` sudo timedatectl set-timezone America/New_York ```
+	
 Useful Docs:
 * [Google's GTFS Documentation](https://developers.google.com/transit/gtfs) Static docs & Realtime docs.
 * [Twilio's SMS Docs for Node.js](https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply-node-js) Shows how to use their built in Messaging Response Functionality (TwiML) &amp; basic express setup.

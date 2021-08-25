@@ -14,7 +14,7 @@ Hosting:
 
     - MySQL server is ran as a service. ```[sudo] service mysql start```  (express server connects locally to MySQL server.)
 
-    -  Unlike MySQL, NodeJS isn't ran in the background as a service, so [Tmux](https://tmuxcheatsheet.com/)  ( terminal multiplexer used to make sub-sessions within the SSH session ) is used to run the express server. This sub-session runs very similarly to service.<br>**SETUP:**<br>**1**. Type ``` tmux```in the SSH CLI to create a session.<br>**2**. Run node server once in session ```node drt_sms.js```<br>**Extra CMDS**:  ``` tmux ls``` to check all sessions.<br>```tmux attach -t <session name>``` to re-connect to sessions.
+    -  Unlike MySQL, NodeJS isn't ran in the background as a service. [tmux](https://tmuxcheatsheet.com/) is used for this.  *(tmux is a terminal multiplexer used to make sub-sessions within the SSH session (terminal), when the main terminal closes, the sub-session(s) can still run)* The NodeJs express server is ran in a tmux sub-session, this runs very similarly to service.<br>**SETUP (in terminal):**<br>**1**. ``` tmux``` to create a session.<br>**2**. Run node server once in session ```node drt_sms.js```<br>**Extra CMDS**:  ``` tmux ls``` to check all sessions.<br>```tmux attach -t <session name>``` to re-connect to sessions.
 
     - Change Ubuntu timezone parameter since node app uses the operation system's date.<br>**>** ``` sudo timedatectl set-timezone America/New_York ```
 	

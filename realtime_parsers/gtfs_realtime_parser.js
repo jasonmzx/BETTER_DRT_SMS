@@ -80,12 +80,12 @@ let stop_data_format = async (trip_data,route_filter) => {
             formatted += 'ROUTE TRANSFER ('+ trips.first.routeId+' - '+trips.second.routeId+') '+
             '\n> '+trips_query[trips.first.tripId] + ' - ' + trips_query[trips.second.tripId]
             //
-           + ( Math.round((trips.first.arrivalTime - (Date.now()/1000))/60) ? ('\n* Arrival in '+ Math.round((trips.first.arrivalTime - (Date.now()/1000))/60)+' minute(s) @ ' ) : 'Bus has arrived. @')
+           + ( Math.round((trips.first.arrivalTime - (Date.now()/1000))/60) ? ('\n* Arrival in '+ Math.round((trips.first.arrivalTime - (Date.now()/1000))/60)+' minute(s) @ ' ) : '\n* Bus has arrived. @')
            + date_lib.format(new Date(trips.first.arrivalTime*1000),'h:mm A' )+ '\n\n' //Time it's coming (HH:MM)
         } else {
             formatted += 'ROUTE '+trip_data[trip_arr[0]].routeId+' > '+trips_query[trip_data[trip_arr[0]].tripId]
             // +'\n* Arrival in '+ Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60) +' minute(s) @ ' + date_lib.format(new Date(trip_data[trip_arr[0]].arrivalTime*1000),'h:mm A' ) + '\n\n'
-            + ( Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60) ? ('\n* Arrival in ' + Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60)+' minute(s) @') : 'Bus has arrived. @' )
+            + ( Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60) ? ('\n* Arrival in ' + Math.round((trip_data[trip_arr[0]].arrivalTime - (Date.now()/1000))/60)+' minute(s) @') : '\n* Bus has arrived. @' )
             + date_lib.format(new Date(trip_data[trip_arr[0]].arrivalTime*1000),'h:mm A' ) + '\n\n'
         }
     });

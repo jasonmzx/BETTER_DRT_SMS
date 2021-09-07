@@ -1641,4 +1641,3 @@ stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,locatio
 999951,93555,Victoria Westbound @ Halls,,43.85395,-78.973499,,,0,,,2
 999961,93554,Victoria Westbound @ Jeffery,,43.858353,-78.953388,,,0,,,2
 999:1,999,Glen Northbound @ Porter,,43.87028394,-78.854489,,,0,,,1
-McQuay Southbound @ Guthrie1,94063,McQuay Southbound @ Guthrie,,43.885318,-78.968639,,,0,,,2

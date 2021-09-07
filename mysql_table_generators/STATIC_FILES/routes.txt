@@ -1,15 +1,20 @@
 route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color
 101,drt,101,Bay Ridges,,3,,006633,ffffff
 110,drt,110,Finch,,3,,006633,ffffff
+112,drt,112,Valley Farm,,3,,006633,ffffff
 120,drt,120,Whites,,3,,006633,ffffff
 216,drt,216,Harwood North,,3,,006633,ffffff
-224,drt,224,Harwood - Salem,,3,,006633,ffffff
+224,drt,224,Harwood,,3,,006633,ffffff
 291,drt,291,Harwood - Kingston,,3,,006633,ffffff
 302,drt,302,Baldwin - Brock,,3,,006633,ffffff
+310,drt,310,Winchester,,3,,006633,ffffff
+392,drt,392,Route 392,,3,,006633,ffffff
 403,drt,403,Park,,3,,006633,ffffff
-405,drt,405,Wilson,,3,,006633,ffffff
+405,drt,405,Adelaide-Wilson,,3,,006633,ffffff
 407,drt,407,Ritson,,3,,006633,ffffff
 410,drt,410,Olive - Harmony,,3,,006633,ffffff
+411,drt,411,South Courtice,,3,,006633,ffffff
+420,drt,420,Britannia West,,3,,006633,ffffff
 900,drt,900,PULSE - Highway 2,,3,,cc6600,000000
 901,drt,901,PULSE - Simcoe,,3,,cc6600,000000
 902,drt,902,King,,3,,006633,ffffff
@@ -17,4 +22,6 @@ route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_
 915,drt,915,Taunton,,3,,006633,ffffff
 916,drt,916,Rossland,,3,,006633,ffffff
 917,drt,917,Bayly - Consumers,,3,,006633,ffffff
-980,drt,980,Late Night,,3,,006633,ffffff
+920,drt,920,Route 920,,3,,006633,ffffff
+N1,drt,N1,Blue Night - Simcoe-Highway 2,,3,,0000ff,ffffff
+N2,drt,N2,Blue Night - Simcoe,,3,,0000ff,ffffff

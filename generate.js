@@ -17,7 +17,7 @@ const SETTINGS = {
         trips: [true, trips_gen.trips_generate, PATH_TO_STATIC],
         routes: [true, routes_gen.routes_generate ,PATH_TO_STATIC] //routes isn't a database table, it's a JSON file
     },
-    EXEC_INIT_GEN: false, //Set this to true if you'd like to generate any tables from the INIT_GEN key below:
+    EXEC_INIT_GEN: true, //Set this to true if you'd like to generate any tables from the INIT_GEN key below:
     INIT_GEN: { //Here you can configure which tables will be generated if EXEC_INIT_GEN is true.
         users: [true, all_table_gen.user_generate ],
         stop_aliases: [true, all_table_gen.stop_aliases_generate],

@@ -22,7 +22,7 @@ let static_times_generate = async (static_file_path) => {
     //Import MySQL database pool connection:
 
     //Import Static Text file dependencies:
-    const { readFile } = require('fs/promises') , stop_times = static_file_path+'/stop_times.txt', trips = static_file_path+'/trips.txt';
+    const { readFile } = require('fs').promises , stop_times = static_file_path+'/stop_times.txt', trips = static_file_path+'/trips.txt';
 
     let trip_data = (await readFile(trips,'utf8')).split('\n').slice(1,-1);
     let stop_times_data = (await readFile(stop_times,'utf8')).split('\n').slice(1,-1);

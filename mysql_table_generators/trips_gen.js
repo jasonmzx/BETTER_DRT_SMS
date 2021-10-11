@@ -11,7 +11,7 @@ let trips_generate = async (static_file_path) => {
 
 
     //Import Static Text file dependencies:
-    const { readFile } = require('fs/promises') , trips = static_file_path+'/trips.txt';
+    const { readFile } = require('fs').promises , trips = static_file_path+'/trips.txt';
 
     let trips_data = (await readFile(trips,'utf8')).split('\n').slice(1,-1);
 

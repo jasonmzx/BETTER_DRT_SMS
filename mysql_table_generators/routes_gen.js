@@ -1,6 +1,6 @@
 let routes_generate = async (static_file_path) => {
     const fs = require('fs');
-    const {readFile } = require('fs/promises'), routes = static_file_path+'/routes.txt';
+    const {readFile } = require('fs').promises, routes = static_file_path+'/routes.txt';
 
     //File rows
     let routes_data = (await readFile(routes,'utf8')).split('\n').slice(1,-1);

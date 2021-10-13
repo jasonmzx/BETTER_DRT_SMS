@@ -19,11 +19,11 @@ const SETTINGS = {
     },
     EXEC_INIT_GEN: false, //Set this to true if you'd like to generate any tables from the INIT_GEN key below:
     INIT_GEN: { //Here you can configure which tables will be generated if EXEC_INIT_GEN is true.
-        users: [true, all_table_gen.user_generate ],
-        stop_aliases: [true, all_table_gen.stop_aliases_generate],
-        realtime_gtfs: [true, all_table_gen.realtime_gtfs_generate],
+        users: [false, all_table_gen.user_generate ],
+        stop_aliases: [false, all_table_gen.stop_aliases_generate],
+        realtime_gtfs: [false, all_table_gen.realtime_gtfs_generate],
         e_tag: [true, all_table_gen.e_tag_generate],
-        static_gen: [true, all_table_gen.static_table_generate]
+        static_gen: [false, all_table_gen.static_table_generate]
     }
 }
 

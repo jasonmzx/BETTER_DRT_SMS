@@ -19,7 +19,7 @@ let realtime_gtfs_generate = async () => {
 
 let e_tag_generate = async () => {
     const db_promise = db.promise();
-    db_promise.query(`CREATE TABLE e_tag(e_tag VARCHAR(20), last_modif VARCHAR(20))`);
+    db_promise.query(`CREATE TABLE e_tag(e_tag VARCHAR(20), last_modif VARCHAR(20));`);
 }
 
 let static_table_generate = async () => {

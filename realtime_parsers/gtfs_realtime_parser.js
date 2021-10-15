@@ -19,7 +19,7 @@ let transfer_check = (trip_data) => {
         same_trip.push([])
         //Basically a filter function:  
         trip_data.forEach((filt_trip,filt_index) => {
-            if(trip.vehicleId == filt_trip.vehicleId){
+            if(trip.vehicleId == filt_trip.vehicleId && (filt_trip.arrivalTime.toString(10)).slice(0,-3) == (trip.arrivalTime.toString(10)).slice(0,-3) ){
                 //If the filter_index isn't in any other tuple (array of 2 elements):
                 if( !((same_trip.filter(tuple => tuple[0] == filt_index || tuple[1] == filt_index)).length) ){
                     same_trip[index].push(filt_index);}
@@ -43,7 +43,9 @@ let stop_data_format = async (trip_data,route_filter) => {
     console.log('[gts_realtime_parser.js] >> Data sorted.') //Server console
 
     let trip_ref_array = transfer_check(trip_data);
-
+    
+    console.log(trip_data)
+    console.log(trip_ref_array);
 
 
     if(route_filter){

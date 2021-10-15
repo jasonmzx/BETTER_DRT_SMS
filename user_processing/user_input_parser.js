@@ -33,7 +33,8 @@ let input_parse = async (user_input,user_number) => {
     const prefix_settings = {
         realtime_fetch : "@", //action: 1 
         static_fetch : "#", //action: 2
-        favorite : "$" 
+        favorite : "$",
+        help: '?'
     }
 
     //Checking if the prefix is valid:
@@ -201,6 +202,8 @@ let input_parse = async (user_input,user_number) => {
 
 
  
+    } else if(user_input.prefix == prefix_settings.help){
+        return `HELP SUMMARY:\n>> Incoming buses at STOP:\ntry: @<stop id>\nor: @<stop id> <route>\nExamples:\n @2569 | all incoming buses at Ajax Station (stop id: 2569 )\n`
     }
 
 

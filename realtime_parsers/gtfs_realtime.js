@@ -60,6 +60,8 @@ let db_insert_realtime = async () => {
   }
   
   query_values = query_values.slice(0,query_values.length-1)
+  
+  //Didn't sanitize this since it's an internal query
   await db.execute(`INSERT INTO realtime_gtfs (expiryTime, routeId, vehicleId, arrivalTime, stopId, tripId) VALUES ${query_values}`);
 
   console.timeEnd("sql_append_query")

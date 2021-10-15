@@ -57,7 +57,7 @@ let input_parse = async (user_input,user_number) => {
             
             if(user_input.command[1]){
 
-                const {readFile } = require('fs/promises'), routes = './mysql_table_generators/STATIC_FILES'+'/routes.json';
+                const {readFile } = require('fs').promises, routes = './mysql_table_generators/STATIC_FILES'+'/routes.json';
 
                 let route_json = await readFile(routes);
 

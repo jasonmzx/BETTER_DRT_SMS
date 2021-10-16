@@ -43,18 +43,30 @@ let stop_data_format = async (trip_data,route_filter) => {
     console.log('[gts_realtime_parser.js] >> Data sorted.') //Server console
 
     let trip_ref_array = transfer_check(trip_data);
-    
-    console.log(trip_data)
-    console.log(trip_ref_array);
-
 
     if(route_filter){
-        console.log('[gts_realtime_parser.js] >> Filtering routes.')
-        if( !(trip_ref_array.some(t => t.length>1)) ){
-            trip_data = trip_data.filter(trip => trip.routeId == route_filter);
-            trip_ref_array = transfer_check(trip_data);
-        }
-    }
+
+        let filtered_ref = []
+
+        for(let i = 0; i < trip_ref_array.length;i++){
+            const t = trip_ref_array[i]
+
+            if(t.length>1){
+                if(trip_data[t[0]].routeId == route_filter || trip_data[t[1]].routeId == route_filter ) {  //If either route filters match, append
+                   filtered_ref.push(t)
+                }
+            } else {
+                if(trip_data[t[0]].routeId == route_filter ){ //If routeId is the filter, append
+                    filtered_ref.push(t)
+                }
+            }
+
+    
+        } //for loop
+
+        trip_ref_array = filtered_ref;
+
+    } //end of route_filter
 
     if(!trip_data.length){ //Callback to static
         return 'No Data Available!' 
